@@ -200,4 +200,7 @@ const th = {
 const td = {
   padding: 12,
   border: "1px solid #ddd",
-};
+};const { data, error } = await supabase
+  .from("purchase_orders")
+  .select("*")
+  .order("po_date", { ascending: false });

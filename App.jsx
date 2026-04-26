@@ -64,10 +64,7 @@ export default function App() {
   const totalSpent = budgets.reduce((s, b) => s + Number(b.spent || 0), 0);
   const totalRemaining = budgets.reduce((s, b) => s + Number(b.remaining || 0), 0);
   const totalLabour = labour.reduce((s, l) => s + Number(l.total_cost || 0), 0);
-
   const totalPOs = purchaseOrders.reduce((s, p) => s + Number(p.gross_amount || 0), 0);
-  const approvedPOs = purchaseOrders.filter((p) => p.status === "Approved").length;
-  const pendingPOs = purchaseOrders.filter((p) => p.status === "Pending").length;
 
   return (
     <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7" }}>
@@ -116,10 +113,7 @@ export default function App() {
         <div style={grid3}>
           <Card title="Total Labour" value={currency(totalLabour)} />
           <Card title="Entries" value={labour.length} />
-          <Card
-            title="Average Payment"
-            value={currency(labour.length ? totalLabour / labour.length : 0)}
-          />
+          <Card title="Average Payment" value={currency(labour.length ? totalLabour / labour.length : 0)} />
         </div>
 
         <Table headers={["Employee", "Days", "Day Rate", "Total Cost"]}>
@@ -137,24 +131,11 @@ export default function App() {
       <Section title="PO Tracker">
         <div style={grid3}>
           <Card title="Total PO Value" value={currency(totalPOs)} />
-          <Card title="Approved POs" value={approvedPOs} />
-          <Card title="Pending POs" value={pendingPOs} />
+          <Card title="PO Count" value={purchaseOrders.length} />
+          <Card title="Latest PO" value={purchaseOrders[0]?.po_number || "None"} />
         </div>
 
-        <Table
-          headers={[
-            "PO No",
-            "Supplier",
-            "Trade",
-            "Description",
-            "Status",
-            "PO Date",
-            "Delivery",
-            "Net",
-            "VAT",
-            "Gross",
-          ]}
-        >
+        <Table headers={["PO No", "Supplier", "Trade", "Description", "Status", "PO Date", "Delivery", "Net", "VAT", "Gross"]}>
           {purchaseOrders.map((po) => (
             <tr key={po.id}>
               <td style={td}>{po.po_number}</td>
@@ -218,9 +199,7 @@ function Table({ headers, children }) {
       <thead>
         <tr style={{ background: "#111827", color: "white" }}>
           {headers.map((h) => (
-            <th key={h} style={th}>
-              {h}
-            </th>
+            <th key={h} style={th}>{h}</th>
           ))}
         </tr>
       </thead>

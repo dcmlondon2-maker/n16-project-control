@@ -3,7 +3,10 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { supabase } from "./supabaseClient";
 
 const currency = (n) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(Number(n || 0));
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(Number(n || 0));
 
 const cashflowData = [
   { week: 1, balance: 10000 },
@@ -16,63 +19,57 @@ export default function App() {
   const [connection, setConnection] = useState("Checking database...");
   const [projects, setProjects] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const [labour, setLabour] = useState([]);
 
   useEffect(() => {
     async function loadData() {
-      try {
-        const { data: projectData, error: projectError } = await supabase
-          .from("projects")
-          .select("*")
-          .order("id", { ascending: true });
+      const { data: projectData, error: projectError } = await supabase
+        .from("projects")
+        .select("*")
+        .order("id");
 
-        if (projectError) {
-          setConnection("Supabase connected, but projects table cannot be read yet.");
-          return;
-        }
+      const { data: budgetData } = await supabase
+        .from("budgets")
+        .select("*")
+        .order("id");
 
-        const { data: budgetData, error: budgetError } = await supabase
-          .from("budgets")
-          .select("*")
-          .order("id", { ascending: true });
+      const { data: labourData } = await supabase
+        .from("labour")
+        .select("*")
+        .order("id");
 
-        if (budgetError) {
-          setConnection("Projects working. Budgets table cannot be read yet.");
-          setProjects(projectData || []);
-          return;
-        }
-
-        setProjects(projectData || []);
-        setBudgets(budgetData || []);
-        setConnection("Supabase connected successfully.");
-      } catch (err) {
-        setConnection("Supabase connection not working yet.");
+      if (projectError) {
+        setConnection("Database error");
+        return;
       }
+
+      setProjects(projectData || []);
+      setBudgets(budgetData || []);
+      setLabour(labourData || []);
+      setConnection("Supabase connected successfully.");
     }
 
     loadData();
   }, []);
 
-  const totalBudget = budgets.reduce((sum, b) => sum + Number(b.budget || 0), 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + Number(b.spent || 0), 0);
-  const totalRemaining = budgets.reduce((sum, b) => sum + Number(b.remaining || 0), 0);
+  const totalBudget = budgets.reduce((s, b) => s + Number(b.budget || 0), 0);
+  const totalSpent = budgets.reduce((s, b) => s + Number(b.spent || 0), 0);
+  const totalRemaining = budgets.reduce((s, b) => s + Number(b.remaining || 0), 0);
+  const totalLabour = labour.reduce((s, l) => s + Number(l.total_cost || 0), 0);
 
   return (
-    <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7", minHeight: "100vh" }}>
-      <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
-        <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
-        <p style={{ marginBottom: 0 }}>Construction SaaS for budget, cashflow, labour, POs and profit control.</p>
-      </div>
+    <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7" }}>
+      <Header />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 24 }}>
+      <div style={grid4}>
         <Card title="N16 Contract inc VAT" value={currency(161479.71)} />
-        <Card title="Client Direct Contractor" value={currency(60000)} />
         <Card title="Total Max Budget" value={currency(221500)} />
+        <Card title="Labour Paid" value={currency(totalLabour)} />
         <Card title="Database Status" value={connection} small />
       </div>
 
-      <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
-        <h2>Cashflow Forecast</h2>
-        <div style={{ height: 320 }}>
+      <Section title="Cashflow Forecast">
+        <div style={{ height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={cashflowData}>
               <XAxis dataKey="week" />
@@ -82,68 +79,79 @@ export default function App() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </Section>
 
-      <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
-        <h2>Budget by Trade</h2>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 20 }}>
+      <Section title="Budget by Trade">
+        <div style={grid3}>
           <Card title="Total Budget" value={currency(totalBudget)} />
-          <Card title="Spent to Date" value={currency(totalSpent)} />
+          <Card title="Spent" value={currency(totalSpent)} />
           <Card title="Remaining" value={currency(totalRemaining)} />
         </div>
 
-        {budgets.length === 0 ? (
-          <p>No budget lines loaded yet.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
-            <thead>
-              <tr style={{ background: "#111827", color: "white" }}>
-                <th style={th}>Trade</th>
-                <th style={th}>Budget</th>
-                <th style={th}>Spent</th>
-                <th style={th}>Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {budgets.map((b) => (
-                <tr key={b.id}>
-                  <td style={td}>{b.trade}</td>
-                  <td style={td}>{currency(b.budget)}</td>
-                  <td style={td}>{currency(b.spent)}</td>
-                  <td style={td}>{currency(b.remaining)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
-        <h2>Modules</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-          {["Cashflow Forecast", "Labour Tracker", "PO Tracker", "Variations", "P&L Dashboard", "Invoices"].map((m) => (
-            <div key={m} style={{ border: "1px solid #ddd", padding: 16, borderRadius: 12 }}>
-              <strong>{m}</strong>
-            </div>
+        <Table headers={["Trade", "Budget", "Spent", "Remaining"]}>
+          {budgets.map((b) => (
+            <tr key={b.id}>
+              <td style={td}>{b.trade}</td>
+              <td style={td}>{currency(b.budget)}</td>
+              <td style={td}>{currency(b.spent)}</td>
+              <td style={td}>{currency(b.remaining)}</td>
+            </tr>
           ))}
-        </div>
-      </div>
+        </Table>
+      </Section>
 
-      <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
-        <h2>Projects from Supabase</h2>
-        {projects.length === 0 ? (
-          <p>No projects loaded yet.</p>
-        ) : (
-          <ul>{projects.map((p) => <li key={p.id}>{p.name} — {currency(p.contract_value)} — {p.status}</li>)}</ul>
-        )}
-      </div>
+      <Section title="Labour Tracker">
+        <div style={grid3}>
+          <Card title="Total Labour" value={currency(totalLabour)} />
+          <Card title="Entries" value={labour.length} />
+          <Card
+            title="Average Payment"
+            value={currency(labour.length ? totalLabour / labour.length : 0)}
+          />
+        </div>
+
+        <Table headers={["Employee", "Days", "Day Rate", "Total Cost"]}>
+          {labour.map((l) => (
+            <tr key={l.id}>
+              <td style={td}>{l.employee || l.worker || "Labour"}</td>
+              <td style={td}>{l.days_worked}</td>
+              <td style={td}>{currency(l.day_rate)}</td>
+              <td style={td}>{currency(l.total_cost)}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+
+      <Section title="Projects from Supabase">
+        <ul>
+          {projects.map((p) => (
+            <li key={p.id}>
+              {p.name} — {currency(p.contract_value)} — {p.status}
+            </li>
+          ))}
+        </ul>
+      </Section>
     </div>
   );
 }
 
-const th = { padding: 12, textAlign: "left", border: "1px solid #ddd" };
-const td = { padding: 12, border: "1px solid #ddd" };
+function Header() {
+  return (
+    <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
+      <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
+      <p>Construction SaaS for budget, cashflow, labour, POs and profit control.</p>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
+      <h2>{title}</h2>
+      {children}
+    </div>
+  );
+}
 
 function Card({ title, value, small }) {
   return (
@@ -153,3 +161,43 @@ function Card({ title, value, small }) {
     </div>
   );
 }
+
+function Table({ headers, children }) {
+  return (
+    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 16 }}>
+      <thead>
+        <tr style={{ background: "#111827", color: "white" }}>
+          {headers.map((h) => (
+            <th key={h} style={th}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{children}</tbody>
+    </table>
+  );
+}
+
+const grid4 = {
+  display: "grid",
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: 16,
+  marginTop: 24,
+};
+
+const grid3 = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: 16,
+  marginBottom: 20,
+};
+
+const th = {
+  padding: 12,
+  textAlign: "left",
+  border: "1px solid #ddd",
+};
+
+const td = {
+  padding: 12,
+  border: "1px solid #ddd",
+};

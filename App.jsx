@@ -398,49 +398,64 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     if (!siteReport) {
       alert("Generate a site report first.");
       return;
-    }function exportSiteReportPdf() {
-  if (!siteReport) {
-    alert("Generate a site report first.");
-    return;
-  }
+    }
 
-  const printWindow = window.open("", "_blank");
-
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Site Report PDF</title>
-        <style>
-          body {
-            font-family: Arial;
-            padding: 40px;
-            line-height: 1.6;
-          }
-          h1 {
-            color: #111827;
-          }
-          pre {
-            white-space: pre-wrap;
-            font-family: Arial;
-            font-size: 14px;
-          }
-        </style>
-      </head>
-      <body>
-        <h1>N16 Site Report</h1>
-        <pre>${siteReport}</pre>
-      </body>
-    </html>
-  `);
-
-  printWindow.document.close();
-  printWindow.print();
-}
     const utterance = new SpeechSynthesisUtterance(siteReport);
     utterance.lang = "en-GB";
     utterance.rate = 0.95;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
+  }
+
+  function exportSiteReportPdf() {
+    if (!siteReport) {
+      alert("Generate a site report first.");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      alert("Popup blocked. Please allow popups for this site.");
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>N16 Site Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              line-height: 1.6;
+              color: #111827;
+            }
+            h1 {
+              margin-bottom: 6px;
+            }
+            .meta {
+              color: #666;
+              margin-bottom: 24px;
+            }
+            pre {
+              white-space: pre-wrap;
+              font-family: Arial, sans-serif;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>N16 Site Report</h1>
+          <div class="meta">Generated from Project Control Dashboard</div>
+          <pre>${siteReport}</pre>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   }
 
   const totalBudget = budgets.reduce((s, b) => s + Number(b.budget || 0), 0);
@@ -713,8 +728,10 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
           <button style={buttonDark} onClick={saveDiary}>Save Diary</button>
           <button style={buttonDark} onClick={generateSiteReport}>Generate Site Report</button>
           <button style={button} onClick={readAloud}>🔊 Read Aloud</button>
-          <button style={buttonDark} onClick={exportSiteReportPdf}>📄 Export PDF</button>    
-          {siteReport && (<div style={reportBox}>
+          <button style={buttonDark} onClick={exportSiteReportPdf}>📄 Export PDF</button>
+
+          {siteReport && (
+            <div style={reportBox}>
               <h3>AI Site Report Summary</h3>
               <pre style={{ whiteSpace: "pre-wrap", fontFamily: "Arial" }}>{siteReport}</pre>
             </div>

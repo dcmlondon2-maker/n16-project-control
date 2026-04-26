@@ -23,38 +23,17 @@ export default function App() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [profitData, setProfitData] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [variations, setVariations] = useState([]);
 
   useEffect(() => {
     async function loadData() {
-      const { data: projectData, error: projectError } = await supabase
-        .from("projects")
-        .select("*")
-        .order("id");
-
-      const { data: budgetData } = await supabase
-        .from("budgets")
-        .select("*")
-        .order("id");
-
-      const { data: labourData } = await supabase
-        .from("labour")
-        .select("*")
-        .order("id");
-
-      const { data: poData } = await supabase
-        .from("purchase_orders")
-        .select("*")
-        .order("po_date", { ascending: false });
-
-      const { data: profitRows } = await supabase
-        .from("profit_tracker")
-        .select("*")
-        .order("id");
-
-      const { data: invoiceRows } = await supabase
-        .from("invoice_tracker")
-        .select("*")
-        .order("invoice_date", { ascending: false });
+      const { data: projectData, error: projectError } = await supabase.from("projects").select("*").order("id");
+      const { data: budgetData } = await supabase.from("budgets").select("*").order("id");
+      const { data: labourData } = await supabase.from("labour").select("*").order("id");
+      const { data: poData } = await supabase.from("purchase_orders").select("*").order("po_date", { ascending: false });
+      const { data: profitRows } = await supabase.from("profit_tracker").select("*").order("id");
+      const { data: invoiceRows } = await supabase.from("invoice_tracker").select("*").order("invoice_date", { ascending: false });
+      const { data: variationRows } = await supabase.from("variation_tracker").select("*").order("submitted_date", { ascending: false });
 
       if (projectError) {
         setConnection("Database error");
@@ -68,6 +47,7 @@ export default function App() {
       setPurchaseOrders(poData || []);
       setProfitData(profitRows || []);
       setInvoices(invoiceRows || []);
+      setVariations(variationRows || []);
       setConnection("Supabase connected successfully.");
     }
 
@@ -84,18 +64,25 @@ export default function App() {
   const totalPaid = invoices.reduce((s, i) => s + Number(i.paid_amount || 0), 0);
   const totalOutstanding = totalInvoiced - totalPaid;
 
+  const totalVariations = variations.reduce((s, v) => s + Number(v.gross_amount || 0), 0);
+  const approvedVariations = variations
+    .filter((v) => v.status === "Approved")
+    .reduce((s, v) => s + Number(v.gross_amount || 0), 0);
+  const pendingVariations = totalVariations - approvedVariations;
+
   const latestProfit = profitData[0] || {};
+  const contractWithVariations = Number(latestProfit.contract_value || 0) + approvedVariations;
 
   const liveProfit =
-    Number(latestProfit.contract_value || 0) -
+    contractWithVariations -
     Number(latestProfit.budget_cost || 0) -
     Number(totalLabour || 0) -
     Number(totalPOs || 0) -
     Number(latestProfit.other_cost || 0);
 
   const margin =
-    Number(latestProfit.contract_value || 0) > 0
-      ? ((liveProfit / Number(latestProfit.contract_value)) * 100).toFixed(1)
+    contractWithVariations > 0
+      ? ((liveProfit / contractWithVariations) * 100).toFixed(1)
       : 0;
 
   return (
@@ -103,7 +90,7 @@ export default function App() {
       <Header />
 
       <div style={grid4}>
-        <Card title="N16 Contract inc VAT" value={currency(161479.71)} />
+        <Card title="Contract + Approved Variations" value={currency(contractWithVariations)} />
         <Card title="Total Invoiced" value={currency(totalInvoiced)} />
         <Card title="Outstanding" value={currency(totalOutstanding)} />
         <Card title="Database Status" value={connection} small />
@@ -210,16 +197,40 @@ export default function App() {
         </Table>
       </Section>
 
+      <Section title="Variation Tracker">
+        <div style={grid3}>
+          <Card title="Total Variations" value={currency(totalVariations)} />
+          <Card title="Approved Variations" value={currency(approvedVariations)} />
+          <Card title="Pending / Draft" value={currency(pendingVariations)} />
+        </div>
+
+        <Table headers={["Variation No", "Client", "Description", "Status", "Submitted", "Approved", "Net", "VAT", "Gross"]}>
+          {variations.map((v) => (
+            <tr key={v.id}>
+              <td style={td}>{v.variation_number}</td>
+              <td style={td}>{v.client}</td>
+              <td style={td}>{v.description}</td>
+              <td style={td}>{v.status}</td>
+              <td style={td}>{v.submitted_date}</td>
+              <td style={td}>{v.approved_date || "-"}</td>
+              <td style={td}>{currency(v.net_amount)}</td>
+              <td style={td}>{currency(v.vat_amount)}</td>
+              <td style={td}>{currency(v.gross_amount)}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+
       <Section title="Profit Tracker">
         <div style={grid3}>
-          <Card title="Contract Value" value={currency(latestProfit.contract_value)} />
+          <Card title="Contract + Approved Variations" value={currency(contractWithVariations)} />
           <Card title="Live Profit" value={currency(liveProfit)} />
           <Card title="Margin %" value={`${margin}%`} />
         </div>
 
-        <Table headers={["Contract", "Budget", "Labour", "PO Cost", "Other", "Profit"]}>
+        <Table headers={["Contract + Vars", "Budget", "Labour", "PO Cost", "Other", "Profit"]}>
           <tr>
-            <td style={td}>{currency(latestProfit.contract_value)}</td>
+            <td style={td}>{currency(contractWithVariations)}</td>
             <td style={td}>{currency(latestProfit.budget_cost)}</td>
             <td style={td}>{currency(totalLabour)}</td>
             <td style={td}>{currency(totalPOs)}</td>
@@ -246,7 +257,7 @@ function Header() {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
-      <p>Construction SaaS for budget, cashflow, labour, POs, invoices and profit control.</p>
+      <p>Construction SaaS for budget, cashflow, labour, POs, invoices, variations and profit control.</p>
     </div>
   );
 }

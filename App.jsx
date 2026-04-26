@@ -1,4 +1,4 @@
- import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 
@@ -31,6 +31,7 @@ export default function App() {
   const [subcontractors, setSubcontractors] = useState([]);
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [siteReport, setSiteReport] = useState("");
 
   const [projectForm, setProjectForm] = useState({
@@ -57,6 +58,19 @@ export default function App() {
     voice_note: "",
   });
 
+  const [expenseForm, setExpenseForm] = useState({
+    expense_date: today,
+    supplier: "",
+    category: "",
+    description: "",
+    status: "Unpaid",
+    net_amount: "",
+    vat_amount: "",
+    notes: "",
+  });
+
+  const [receiptFile, setReceiptFile] = useState(null);
+
   async function loadData() {
     const { data: projectData } = await supabase.from("projects").select("*").order("id");
     const { data: budgetData } = await supabase.from("budgets").select("*").order("id");
@@ -68,6 +82,7 @@ export default function App() {
     const { data: subRows } = await supabase.from("subcontractor_payments").select("*").order("invoice_date", { ascending: false });
     const { data: diaryRows } = await supabase.from("site_diary").select("*").order("diary_date", { ascending: false });
     const { data: noteRows } = await supabase.from("project_notes").select("*").order("note_date", { ascending: false });
+    const { data: expenseRows } = await supabase.from("expenses_tracker").select("*").order("expense_date", { ascending: false });
 
     setProjects(projectData || []);
     setBudgets(budgetData || []);
@@ -79,12 +94,75 @@ export default function App() {
     setSubcontractors(subRows || []);
     setDiaryEntries(diaryRows || []);
     setNotes(noteRows || []);
+    setExpenses(expenseRows || []);
     setConnection("Supabase connected successfully.");
   }
 
   useEffect(() => {
     loadData();
   }, []);
+
+  async function saveExpense() {
+    if (!expenseForm.supplier) {
+      alert("Supplier is required.");
+      return;
+    }
+
+    let receiptUrl = "";
+
+    if (receiptFile) {
+      const fileName = `${Date.now()}-${receiptFile.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("receipts")
+        .upload(fileName, receiptFile);
+
+      if (uploadError) {
+        alert("Receipt upload failed. Check the Supabase receipts bucket is public.");
+        console.error(uploadError);
+        return;
+      }
+
+      const { data } = supabase.storage.from("receipts").getPublicUrl(fileName);
+      receiptUrl = data.publicUrl;
+    }
+
+    await supabase.from("expenses_tracker").insert([
+      {
+        expense_date: expenseForm.expense_date,
+        supplier: expenseForm.supplier,
+        category: expenseForm.category,
+        description: expenseForm.description,
+        status: expenseForm.status,
+        net_amount: Number(expenseForm.net_amount || 0),
+        vat_amount: Number(expenseForm.vat_amount || 0),
+        receipt_url: receiptUrl,
+        notes: expenseForm.notes,
+      },
+    ]);
+
+    setExpenseForm({
+      expense_date: today,
+      supplier: "",
+      category: "",
+      description: "",
+      status: "Unpaid",
+      net_amount: "",
+      vat_amount: "",
+      notes: "",
+    });
+
+    setReceiptFile(null);
+    loadData();
+  }
+
+  async function deleteExpense(id) {
+    const confirmDelete = window.confirm("Delete this expense?");
+    if (!confirmDelete) return;
+
+    await supabase.from("expenses_tracker").delete().eq("id", id);
+    loadData();
+  }
 
   async function saveProject() {
     if (!projectForm.name) {
@@ -267,6 +345,10 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
   const totalSubbiesPaid = subcontractors.reduce((s, x) => s + Number(x.paid_amount || 0), 0);
   const totalSubbiesOutstanding = totalSubbies - totalSubbiesPaid;
 
+  const totalExpenseNet = expenses.reduce((s, e) => s + Number(e.net_amount || 0), 0);
+  const totalExpenseVat = expenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
+  const totalExpenseGross = expenses.reduce((s, e) => s + Number(e.gross_amount || 0), 0);
+
   const latestProfit = profitData[0] || {};
   const contractWithVariations = Number(latestProfit.contract_value || 0) + approvedVariations;
 
@@ -276,6 +358,7 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     totalLabour -
     totalPOs -
     totalSubbies -
+    totalExpenseGross -
     Number(latestProfit.other_cost || 0);
 
   const margin =
@@ -291,6 +374,7 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     "Invoices",
     "Variations",
     "Subbies",
+    "Expenses",
     "Profit",
     "Site Diary",
     "Notes",
@@ -390,6 +474,113 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
             <Card title="Subbies Paid" value={currency(totalSubbiesPaid)} />
             <Card title="Outstanding" value={currency(totalSubbiesOutstanding)} />
           </div>
+        </Section>
+      )}
+
+      {activeTab === "Expenses" && (
+        <Section title="Expenses / Receipts Tracker">
+          <div style={grid3}>
+            <Card title="Expenses Net" value={currency(totalExpenseNet)} />
+            <Card title="VAT" value={currency(totalExpenseVat)} />
+            <Card title="Gross" value={currency(totalExpenseGross)} />
+          </div>
+
+          <div style={formBox}>
+            <h3>Add Expense / Receipt</h3>
+
+            <FormInput
+              label="Date"
+              type="date"
+              value={expenseForm.expense_date}
+              onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })}
+            />
+
+            <FormInput
+              label="Supplier"
+              value={expenseForm.supplier}
+              onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })}
+            />
+
+            <FormInput
+              label="Category"
+              value={expenseForm.category}
+              onChange={(v) => setExpenseForm({ ...expenseForm, category: v })}
+            />
+
+            <FormInput
+              label="Description"
+              value={expenseForm.description}
+              onChange={(v) => setExpenseForm({ ...expenseForm, description: v })}
+            />
+
+            <FormInput
+              label="Status"
+              value={expenseForm.status}
+              onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
+            />
+
+            <FormInput
+              label="Net Amount"
+              type="number"
+              value={expenseForm.net_amount}
+              onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
+            />
+
+            <FormInput
+              label="VAT Amount"
+              type="number"
+              value={expenseForm.vat_amount}
+              onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
+            />
+
+            <FormArea
+              label="Notes"
+              value={expenseForm.notes}
+              onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
+            />
+
+            <label style={labelStyle}>
+              Receipt Photo / File
+              <input
+                style={inputStyle}
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setReceiptFile(e.target.files[0])}
+              />
+            </label>
+
+            <button style={buttonDark} onClick={saveExpense}>
+              Save Expense
+            </button>
+          </div>
+
+          <Table headers={["Date", "Supplier", "Category", "Status", "Net", "VAT", "Gross", "Receipt", "Actions"]}>
+            {expenses.map((e) => (
+              <tr key={e.id}>
+                <td style={td}>{e.expense_date}</td>
+                <td style={td}>{e.supplier}</td>
+                <td style={td}>{e.category}</td>
+                <td style={td}>{e.status}</td>
+                <td style={td}>{currency(e.net_amount)}</td>
+                <td style={td}>{currency(e.vat_amount)}</td>
+                <td style={td}>{currency(e.gross_amount)}</td>
+                <td style={td}>
+                  {e.receipt_url ? (
+                    <a href={e.receipt_url} target="_blank" rel="noreferrer">
+                      View
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                <td style={td}>
+                  <button style={smallDangerButton} onClick={() => deleteExpense(e.id)}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </Table>
         </Section>
       )}
 
@@ -520,7 +711,7 @@ function Header() {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
-      <p style={{ marginBottom: 0 }}>Budget, cashflow, labour, POs, invoices, variations, diary and notes.</p>
+      <p style={{ marginBottom: 0 }}>Budget, cashflow, labour, POs, invoices, variations, expenses, diary and notes.</p>
     </div>
   );
 }

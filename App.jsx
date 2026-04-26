@@ -22,6 +22,7 @@ export default function App() {
   const [labour, setLabour] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [profitData, setProfitData] = useState([]);
+  const [invoices, setInvoices] = useState([]);
 
   useEffect(() => {
     async function loadData() {
@@ -50,6 +51,11 @@ export default function App() {
         .select("*")
         .order("id");
 
+      const { data: invoiceRows } = await supabase
+        .from("invoice_tracker")
+        .select("*")
+        .order("invoice_date", { ascending: false });
+
       if (projectError) {
         setConnection("Database error");
         console.error(projectError);
@@ -61,6 +67,7 @@ export default function App() {
       setLabour(labourData || []);
       setPurchaseOrders(poData || []);
       setProfitData(profitRows || []);
+      setInvoices(invoiceRows || []);
       setConnection("Supabase connected successfully.");
     }
 
@@ -72,6 +79,10 @@ export default function App() {
   const totalRemaining = budgets.reduce((s, b) => s + Number(b.remaining || 0), 0);
   const totalLabour = labour.reduce((s, l) => s + Number(l.total_cost || 0), 0);
   const totalPOs = purchaseOrders.reduce((s, p) => s + Number(p.gross_amount || 0), 0);
+
+  const totalInvoiced = invoices.reduce((s, i) => s + Number(i.gross_amount || 0), 0);
+  const totalPaid = invoices.reduce((s, i) => s + Number(i.paid_amount || 0), 0);
+  const totalOutstanding = totalInvoiced - totalPaid;
 
   const latestProfit = profitData[0] || {};
 
@@ -93,8 +104,8 @@ export default function App() {
 
       <div style={grid4}>
         <Card title="N16 Contract inc VAT" value={currency(161479.71)} />
-        <Card title="Total Max Budget" value={currency(221500)} />
-        <Card title="Labour Paid" value={currency(totalLabour)} />
+        <Card title="Total Invoiced" value={currency(totalInvoiced)} />
+        <Card title="Outstanding" value={currency(totalOutstanding)} />
         <Card title="Database Status" value={connection} small />
       </div>
 
@@ -174,6 +185,31 @@ export default function App() {
         </Table>
       </Section>
 
+      <Section title="Invoice Tracker">
+        <div style={grid3}>
+          <Card title="Total Invoiced" value={currency(totalInvoiced)} />
+          <Card title="Paid" value={currency(totalPaid)} />
+          <Card title="Outstanding" value={currency(totalOutstanding)} />
+        </div>
+
+        <Table headers={["Invoice No", "Client", "Description", "Status", "Invoice Date", "Due Date", "Net", "VAT", "Gross", "Paid"]}>
+          {invoices.map((inv) => (
+            <tr key={inv.id}>
+              <td style={td}>{inv.invoice_number}</td>
+              <td style={td}>{inv.client}</td>
+              <td style={td}>{inv.description}</td>
+              <td style={td}>{inv.status}</td>
+              <td style={td}>{inv.invoice_date}</td>
+              <td style={td}>{inv.due_date}</td>
+              <td style={td}>{currency(inv.net_amount)}</td>
+              <td style={td}>{currency(inv.vat_amount)}</td>
+              <td style={td}>{currency(inv.gross_amount)}</td>
+              <td style={td}>{currency(inv.paid_amount)}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+
       <Section title="Profit Tracker">
         <div style={grid3}>
           <Card title="Contract Value" value={currency(latestProfit.contract_value)} />
@@ -210,7 +246,7 @@ function Header() {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
-      <p>Construction SaaS for budget, cashflow, labour, POs and profit control.</p>
+      <p>Construction SaaS for budget, cashflow, labour, POs, invoices and profit control.</p>
     </div>
   );
 }

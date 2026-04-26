@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 
@@ -32,6 +32,14 @@ export default function App() {
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [notes, setNotes] = useState([]);
   const [siteReport, setSiteReport] = useState("");
+
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    contract_value: "",
+    status: "Live",
+  });
+
+  const [editingProjectId, setEditingProjectId] = useState(null);
 
   const [diaryForm, setDiaryForm] = useState({
     diary_date: today,
@@ -78,6 +86,68 @@ export default function App() {
     loadData();
   }, []);
 
+  async function saveProject() {
+    if (!projectForm.name) {
+      alert("Project name is required.");
+      return;
+    }
+
+    if (editingProjectId) {
+      await supabase
+        .from("projects")
+        .update({
+          name: projectForm.name,
+          contract_value: Number(projectForm.contract_value || 0),
+          status: projectForm.status,
+        })
+        .eq("id", editingProjectId);
+    } else {
+      await supabase.from("projects").insert([
+        {
+          name: projectForm.name,
+          contract_value: Number(projectForm.contract_value || 0),
+          status: projectForm.status,
+        },
+      ]);
+    }
+
+    setProjectForm({
+      name: "",
+      contract_value: "",
+      status: "Live",
+    });
+
+    setEditingProjectId(null);
+    loadData();
+  }
+
+  function editProject(project) {
+    setProjectForm({
+      name: project.name || "",
+      contract_value: project.contract_value || "",
+      status: project.status || "Live",
+    });
+
+    setEditingProjectId(project.id);
+  }
+
+  async function deleteProject(id) {
+    const confirmDelete = window.confirm("Delete this project?");
+    if (!confirmDelete) return;
+
+    await supabase.from("projects").delete().eq("id", id);
+    loadData();
+  }
+
+  function cancelProjectEdit() {
+    setProjectForm({
+      name: "",
+      contract_value: "",
+      status: "Live",
+    });
+    setEditingProjectId(null);
+  }
+
   function startVoice(target, field) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -112,6 +182,7 @@ export default function App() {
 
   async function saveDiary() {
     await supabase.from("site_diary").insert([diaryForm]);
+
     setDiaryForm({
       diary_date: today,
       weather: "",
@@ -120,17 +191,20 @@ export default function App() {
       issues: "",
       voice_note: "",
     });
+
     loadData();
   }
 
   async function saveNote() {
     await supabase.from("project_notes").insert([noteForm]);
+
     setNoteForm({
       note_date: today,
       title: "",
       note: "",
       voice_note: "",
     });
+
     loadData();
   }
 
@@ -389,14 +463,53 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
       )}
 
       {activeTab === "Projects" && (
-        <Section title="Projects from Supabase">
-          <ul>
+        <Section title="Projects">
+          <div style={formBox}>
+            <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
+
+            <FormInput
+              label="Project Name"
+              value={projectForm.name}
+              onChange={(v) => setProjectForm({ ...projectForm, name: v })}
+            />
+
+            <FormInput
+              label="Contract Value"
+              type="number"
+              value={projectForm.contract_value}
+              onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })}
+            />
+
+            <FormInput
+              label="Status"
+              value={projectForm.status}
+              onChange={(v) => setProjectForm({ ...projectForm, status: v })}
+            />
+
+            <button style={buttonDark} onClick={saveProject}>
+              {editingProjectId ? "Save Changes" : "Add Project"}
+            </button>
+
+            {editingProjectId && (
+              <button style={button} onClick={cancelProjectEdit}>
+                Cancel Edit
+              </button>
+            )}
+          </div>
+
+          <Table headers={["Project", "Contract Value", "Status", "Actions"]}>
             {projects.map((p) => (
-              <li key={p.id}>
-                {p.name} — {currency(p.contract_value)} — {p.status}
-              </li>
+              <tr key={p.id}>
+                <td style={td}>{p.name}</td>
+                <td style={td}>{currency(p.contract_value)}</td>
+                <td style={td}>{p.status}</td>
+                <td style={td}>
+                  <button style={smallButton} onClick={() => editProject(p)}>Edit</button>
+                  <button style={smallDangerButton} onClick={() => deleteProject(p.id)}>Delete</button>
+                </td>
+              </tr>
             ))}
-          </ul>
+          </Table>
         </Section>
       )}
     </div>
@@ -527,6 +640,21 @@ const buttonDark = {
   color: "white",
 };
 
+const smallButton = {
+  padding: "6px 10px",
+  marginRight: 8,
+  borderRadius: 6,
+  border: "1px solid #ccc",
+  background: "white",
+  cursor: "pointer",
+};
+
+const smallDangerButton = {
+  ...smallButton,
+  background: "#fee2e2",
+  border: "1px solid #fecaca",
+};
+
 const reportBox = {
   marginTop: 20,
   padding: 20,
@@ -534,3 +662,12 @@ const reportBox = {
   borderRadius: 12,
   border: "1px solid #ddd",
 };
+
+const formBox = {
+  padding: 20,
+  background: "#f9fafb",
+  borderRadius: 12,
+  border: "1px solid #ddd",
+  marginBottom: 20,
+};
+      

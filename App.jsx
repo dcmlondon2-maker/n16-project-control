@@ -32,6 +32,7 @@ export default function App() {
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [notes, setNotes] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [snags, setSnags] = useState([]);
   const [siteReport, setSiteReport] = useState("");
 
   const [projectForm, setProjectForm] = useState({
@@ -69,7 +70,18 @@ export default function App() {
     notes: "",
   });
 
+  const [snagForm, setSnagForm] = useState({
+    snag_date: today,
+    location: "",
+    description: "",
+    priority: "Medium",
+    status: "Open",
+    assigned_to: "",
+    notes: "",
+  });
+
   const [receiptFile, setReceiptFile] = useState(null);
+  const [snagPhoto, setSnagPhoto] = useState(null);
 
   async function loadData() {
     const { data: projectData } = await supabase.from("projects").select("*").order("id");
@@ -83,6 +95,7 @@ export default function App() {
     const { data: diaryRows } = await supabase.from("site_diary").select("*").order("diary_date", { ascending: false });
     const { data: noteRows } = await supabase.from("project_notes").select("*").order("note_date", { ascending: false });
     const { data: expenseRows } = await supabase.from("expenses_tracker").select("*").order("expense_date", { ascending: false });
+    const { data: snagRows } = await supabase.from("snagging_tracker").select("*").order("snag_date", { ascending: false });
 
     setProjects(projectData || []);
     setBudgets(budgetData || []);
@@ -95,12 +108,73 @@ export default function App() {
     setDiaryEntries(diaryRows || []);
     setNotes(noteRows || []);
     setExpenses(expenseRows || []);
+    setSnags(snagRows || []);
     setConnection("Supabase connected successfully.");
   }
 
   useEffect(() => {
     loadData();
   }, []);
+
+  async function saveSnag() {
+    if (!snagForm.description) {
+      alert("Snag description is required.");
+      return;
+    }
+
+    let photoUrl = "";
+
+    if (snagPhoto) {
+      const fileName = `${Date.now()}-${snagPhoto.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("snag-photos")
+        .upload(fileName, snagPhoto);
+
+      if (uploadError) {
+        alert("Photo upload failed. Check the Supabase snag-photos bucket is public.");
+        console.error(uploadError);
+        return;
+      }
+
+      const { data } = supabase.storage.from("snag-photos").getPublicUrl(fileName);
+      photoUrl = data.publicUrl;
+    }
+
+    await supabase.from("snagging_tracker").insert([
+      {
+        snag_date: snagForm.snag_date,
+        location: snagForm.location,
+        description: snagForm.description,
+        priority: snagForm.priority,
+        status: snagForm.status,
+        assigned_to: snagForm.assigned_to,
+        photo_url: photoUrl,
+        notes: snagForm.notes,
+      },
+    ]);
+
+    setSnagForm({
+      snag_date: today,
+      location: "",
+      description: "",
+      priority: "Medium",
+      status: "Open",
+      assigned_to: "",
+      notes: "",
+    });
+
+    setSnagPhoto(null);
+    loadData();
+  }
+
+  async function deleteSnag(id) {
+    const confirmDelete = window.confirm("Delete this snag?");
+    if (!confirmDelete) return;
+
+    await supabase.from("snagging_tracker").delete().eq("id", id);
+    loadData();
+  }
 
   async function saveExpense() {
     if (!expenseForm.supplier) {
@@ -255,6 +329,13 @@ export default function App() {
           [field]: prev[field] ? prev[field] + " " + text : text,
         }));
       }
+
+      if (target === "snag") {
+        setSnagForm((prev) => ({
+          ...prev,
+          [field]: prev[field] ? prev[field] + " " + text : text,
+        }));
+      }
     };
   }
 
@@ -349,6 +430,10 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
   const totalExpenseVat = expenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
   const totalExpenseGross = expenses.reduce((s, e) => s + Number(e.gross_amount || 0), 0);
 
+  const openSnags = snags.filter((s) => s.status !== "Closed").length;
+  const closedSnags = snags.filter((s) => s.status === "Closed").length;
+  const highPrioritySnags = snags.filter((s) => s.priority === "High").length;
+
   const latestProfit = profitData[0] || {};
   const contractWithVariations = Number(latestProfit.contract_value || 0) + approvedVariations;
 
@@ -375,6 +460,7 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     "Variations",
     "Subbies",
     "Expenses",
+    "Snagging",
     "Profit",
     "Site Diary",
     "Notes",
@@ -488,70 +574,21 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
           <div style={formBox}>
             <h3>Add Expense / Receipt</h3>
 
-            <FormInput
-              label="Date"
-              type="date"
-              value={expenseForm.expense_date}
-              onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })}
-            />
-
-            <FormInput
-              label="Supplier"
-              value={expenseForm.supplier}
-              onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })}
-            />
-
-            <FormInput
-              label="Category"
-              value={expenseForm.category}
-              onChange={(v) => setExpenseForm({ ...expenseForm, category: v })}
-            />
-
-            <FormInput
-              label="Description"
-              value={expenseForm.description}
-              onChange={(v) => setExpenseForm({ ...expenseForm, description: v })}
-            />
-
-            <FormInput
-              label="Status"
-              value={expenseForm.status}
-              onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
-            />
-
-            <FormInput
-              label="Net Amount"
-              type="number"
-              value={expenseForm.net_amount}
-              onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
-            />
-
-            <FormInput
-              label="VAT Amount"
-              type="number"
-              value={expenseForm.vat_amount}
-              onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
-            />
-
-            <FormArea
-              label="Notes"
-              value={expenseForm.notes}
-              onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
-            />
+            <FormInput label="Date" type="date" value={expenseForm.expense_date} onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })} />
+            <FormInput label="Supplier" value={expenseForm.supplier} onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })} />
+            <FormInput label="Category" value={expenseForm.category} onChange={(v) => setExpenseForm({ ...expenseForm, category: v })} />
+            <FormInput label="Description" value={expenseForm.description} onChange={(v) => setExpenseForm({ ...expenseForm, description: v })} />
+            <FormInput label="Status" value={expenseForm.status} onChange={(v) => setExpenseForm({ ...expenseForm, status: v })} />
+            <FormInput label="Net Amount" type="number" value={expenseForm.net_amount} onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })} />
+            <FormInput label="VAT Amount" type="number" value={expenseForm.vat_amount} onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })} />
+            <FormArea label="Notes" value={expenseForm.notes} onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })} />
 
             <label style={labelStyle}>
               Receipt Photo / File
-              <input
-                style={inputStyle}
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => setReceiptFile(e.target.files[0])}
-              />
+              <input style={inputStyle} type="file" accept="image/*,.pdf" onChange={(e) => setReceiptFile(e.target.files[0])} />
             </label>
 
-            <button style={buttonDark} onClick={saveExpense}>
-              Save Expense
-            </button>
+            <button style={buttonDark} onClick={saveExpense}>Save Expense</button>
           </div>
 
           <Table headers={["Date", "Supplier", "Category", "Status", "Net", "VAT", "Gross", "Receipt", "Actions"]}>
@@ -564,20 +601,53 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
                 <td style={td}>{currency(e.net_amount)}</td>
                 <td style={td}>{currency(e.vat_amount)}</td>
                 <td style={td}>{currency(e.gross_amount)}</td>
-                <td style={td}>
-                  {e.receipt_url ? (
-                    <a href={e.receipt_url} target="_blank" rel="noreferrer">
-                      View
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                <td style={td}>
-                  <button style={smallDangerButton} onClick={() => deleteExpense(e.id)}>
-                    Delete
-                  </button>
-                </td>
+                <td style={td}>{e.receipt_url ? <a href={e.receipt_url} target="_blank" rel="noreferrer">View</a> : "-"}</td>
+                <td style={td}><button style={smallDangerButton} onClick={() => deleteExpense(e.id)}>Delete</button></td>
+              </tr>
+            ))}
+          </Table>
+        </Section>
+      )}
+
+      {activeTab === "Snagging" && (
+        <Section title="Snagging / Defect Photos">
+          <div style={grid3}>
+            <Card title="Open Snags" value={openSnags} />
+            <Card title="Closed Snags" value={closedSnags} />
+            <Card title="High Priority" value={highPrioritySnags} />
+          </div>
+
+          <div style={formBox}>
+            <h3>Add Snag / Defect</h3>
+
+            <FormInput label="Date" type="date" value={snagForm.snag_date} onChange={(v) => setSnagForm({ ...snagForm, snag_date: v })} />
+            <FormInput label="Location" value={snagForm.location} onChange={(v) => setSnagForm({ ...snagForm, location: v })} />
+            <FormArea label="Description" value={snagForm.description} onChange={(v) => setSnagForm({ ...snagForm, description: v })} />
+            <FormInput label="Priority" value={snagForm.priority} onChange={(v) => setSnagForm({ ...snagForm, priority: v })} />
+            <FormInput label="Status" value={snagForm.status} onChange={(v) => setSnagForm({ ...snagForm, status: v })} />
+            <FormInput label="Assigned To" value={snagForm.assigned_to} onChange={(v) => setSnagForm({ ...snagForm, assigned_to: v })} />
+            <FormArea label="Notes" value={snagForm.notes} onChange={(v) => setSnagForm({ ...snagForm, notes: v })} />
+
+            <label style={labelStyle}>
+              Defect Photo
+              <input style={inputStyle} type="file" accept="image/*" onChange={(e) => setSnagPhoto(e.target.files[0])} />
+            </label>
+
+            <button style={button} onClick={() => startVoice("snag", "description")}>🎤 Voice Description</button>
+            <button style={buttonDark} onClick={saveSnag}>Save Snag</button>
+          </div>
+
+          <Table headers={["Date", "Location", "Description", "Priority", "Status", "Assigned", "Photo", "Actions"]}>
+            {snags.map((s) => (
+              <tr key={s.id}>
+                <td style={td}>{s.snag_date}</td>
+                <td style={td}>{s.location}</td>
+                <td style={td}>{s.description}</td>
+                <td style={td}>{s.priority}</td>
+                <td style={td}>{s.status}</td>
+                <td style={td}>{s.assigned_to}</td>
+                <td style={td}>{s.photo_url ? <a href={s.photo_url} target="_blank" rel="noreferrer">View</a> : "-"}</td>
+                <td style={td}><button style={smallDangerButton} onClick={() => deleteSnag(s.id)}>Delete</button></td>
               </tr>
             ))}
           </Table>
@@ -658,34 +728,15 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
           <div style={formBox}>
             <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
 
-            <FormInput
-              label="Project Name"
-              value={projectForm.name}
-              onChange={(v) => setProjectForm({ ...projectForm, name: v })}
-            />
-
-            <FormInput
-              label="Contract Value"
-              type="number"
-              value={projectForm.contract_value}
-              onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })}
-            />
-
-            <FormInput
-              label="Status"
-              value={projectForm.status}
-              onChange={(v) => setProjectForm({ ...projectForm, status: v })}
-            />
+            <FormInput label="Project Name" value={projectForm.name} onChange={(v) => setProjectForm({ ...projectForm, name: v })} />
+            <FormInput label="Contract Value" type="number" value={projectForm.contract_value} onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })} />
+            <FormInput label="Status" value={projectForm.status} onChange={(v) => setProjectForm({ ...projectForm, status: v })} />
 
             <button style={buttonDark} onClick={saveProject}>
               {editingProjectId ? "Save Changes" : "Add Project"}
             </button>
 
-            {editingProjectId && (
-              <button style={button} onClick={cancelProjectEdit}>
-                Cancel Edit
-              </button>
-            )}
+            {editingProjectId && <button style={button} onClick={cancelProjectEdit}>Cancel Edit</button>}
           </div>
 
           <Table headers={["Project", "Contract Value", "Status", "Actions"]}>
@@ -711,7 +762,7 @@ function Header() {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
-      <p style={{ marginBottom: 0 }}>Budget, cashflow, labour, POs, invoices, variations, expenses, diary and notes.</p>
+      <p style={{ marginBottom: 0 }}>Budget, cashflow, labour, POs, invoices, variations, expenses, snagging, diary and notes.</p>
     </div>
   );
 }
@@ -861,4 +912,3 @@ const formBox = {
   border: "1px solid #ddd",
   marginBottom: 20,
 };
-      

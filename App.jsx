@@ -15,26 +15,46 @@ const cashflowData = [
 export default function App() {
   const [connection, setConnection] = useState("Checking database...");
   const [projects, setProjects] = useState([]);
+  const [budgets, setBudgets] = useState([]);
 
   useEffect(() => {
-    async function checkConnection() {
+    async function loadData() {
       try {
-        const { data, error } = await supabase.from("projects").select("*").limit(10);
+        const { data: projectData, error: projectError } = await supabase
+          .from("projects")
+          .select("*")
+          .order("id", { ascending: true });
 
-        if (error) {
-          setConnection("Supabase connected, but database tables are not created yet.");
+        if (projectError) {
+          setConnection("Supabase connected, but projects table cannot be read yet.");
           return;
         }
 
-        setProjects(data || []);
+        const { data: budgetData, error: budgetError } = await supabase
+          .from("budgets")
+          .select("*")
+          .order("id", { ascending: true });
+
+        if (budgetError) {
+          setConnection("Projects working. Budgets table cannot be read yet.");
+          setProjects(projectData || []);
+          return;
+        }
+
+        setProjects(projectData || []);
+        setBudgets(budgetData || []);
         setConnection("Supabase connected successfully.");
       } catch (err) {
         setConnection("Supabase connection not working yet.");
       }
     }
 
-    checkConnection();
+    loadData();
   }, []);
+
+  const totalBudget = budgets.reduce((sum, b) => sum + Number(b.budget || 0), 0);
+  const totalSpent = budgets.reduce((sum, b) => sum + Number(b.spent || 0), 0);
+  const totalRemaining = budgets.reduce((sum, b) => sum + Number(b.remaining || 0), 0);
 
   return (
     <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7", minHeight: "100vh" }}>
@@ -65,9 +85,44 @@ export default function App() {
       </div>
 
       <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
+        <h2>Budget by Trade</h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 20 }}>
+          <Card title="Total Budget" value={currency(totalBudget)} />
+          <Card title="Spent to Date" value={currency(totalSpent)} />
+          <Card title="Remaining" value={currency(totalRemaining)} />
+        </div>
+
+        {budgets.length === 0 ? (
+          <p>No budget lines loaded yet.</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", background: "white" }}>
+            <thead>
+              <tr style={{ background: "#111827", color: "white" }}>
+                <th style={th}>Trade</th>
+                <th style={th}>Budget</th>
+                <th style={th}>Spent</th>
+                <th style={th}>Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              {budgets.map((b) => (
+                <tr key={b.id}>
+                  <td style={td}>{b.trade}</td>
+                  <td style={td}>{currency(b.budget)}</td>
+                  <td style={td}>{currency(b.spent)}</td>
+                  <td style={td}>{currency(b.remaining)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
         <h2>Modules</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-          {["Budget by Trade", "Cashflow Forecast", "Labour Tracker", "PO Tracker", "Variations", "P&L Dashboard"].map((m) => (
+          {["Cashflow Forecast", "Labour Tracker", "PO Tracker", "Variations", "P&L Dashboard", "Invoices"].map((m) => (
             <div key={m} style={{ border: "1px solid #ddd", padding: 16, borderRadius: 12 }}>
               <strong>{m}</strong>
             </div>
@@ -78,14 +133,17 @@ export default function App() {
       <div style={{ marginTop: 24, background: "white", padding: 24, borderRadius: 16 }}>
         <h2>Projects from Supabase</h2>
         {projects.length === 0 ? (
-          <p>No projects loaded yet. Next step: create your database tables and seed the first N16 project.</p>
+          <p>No projects loaded yet.</p>
         ) : (
-          <ul>{projects.map((p) => <li key={p.id}>{p.name}</li>)}</ul>
+          <ul>{projects.map((p) => <li key={p.id}>{p.name} — {currency(p.contract_value)} — {p.status}</li>)}</ul>
         )}
       </div>
     </div>
   );
 }
+
+const th = { padding: 12, textAlign: "left", border: "1px solid #ddd" };
+const td = { padding: 12, border: "1px solid #ddd" };
 
 function Card({ title, value, small }) {
   return (

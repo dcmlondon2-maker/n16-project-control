@@ -20,6 +20,7 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [labour, setLabour] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
 
   useEffect(() => {
     async function loadData() {
@@ -38,14 +39,21 @@ export default function App() {
         .select("*")
         .order("id");
 
-      if (projectError) {
+      const { data: poData, error: poError } = await supabase
+        .from("purchase_orders")
+        .select("*")
+        .order("po_date", { ascending: false });
+
+      if (projectError || poError) {
         setConnection("Database error");
+        console.error(projectError || poError);
         return;
       }
 
       setProjects(projectData || []);
       setBudgets(budgetData || []);
       setLabour(labourData || []);
+      setPurchaseOrders(poData || []);
       setConnection("Supabase connected successfully.");
     }
 
@@ -56,6 +64,10 @@ export default function App() {
   const totalSpent = budgets.reduce((s, b) => s + Number(b.spent || 0), 0);
   const totalRemaining = budgets.reduce((s, b) => s + Number(b.remaining || 0), 0);
   const totalLabour = labour.reduce((s, l) => s + Number(l.total_cost || 0), 0);
+
+  const totalPOs = purchaseOrders.reduce((s, p) => s + Number(p.gross_amount || 0), 0);
+  const approvedPOs = purchaseOrders.filter((p) => p.status === "Approved").length;
+  const pendingPOs = purchaseOrders.filter((p) => p.status === "Pending").length;
 
   return (
     <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7" }}>
@@ -122,6 +134,44 @@ export default function App() {
         </Table>
       </Section>
 
+      <Section title="PO Tracker">
+        <div style={grid3}>
+          <Card title="Total PO Value" value={currency(totalPOs)} />
+          <Card title="Approved POs" value={approvedPOs} />
+          <Card title="Pending POs" value={pendingPOs} />
+        </div>
+
+        <Table
+          headers={[
+            "PO No",
+            "Supplier",
+            "Trade",
+            "Description",
+            "Status",
+            "PO Date",
+            "Delivery",
+            "Net",
+            "VAT",
+            "Gross",
+          ]}
+        >
+          {purchaseOrders.map((po) => (
+            <tr key={po.id}>
+              <td style={td}>{po.po_number}</td>
+              <td style={td}>{po.supplier}</td>
+              <td style={td}>{po.trade}</td>
+              <td style={td}>{po.description}</td>
+              <td style={td}>{po.status}</td>
+              <td style={td}>{po.po_date}</td>
+              <td style={td}>{po.expected_delivery}</td>
+              <td style={td}>{currency(po.net_amount)}</td>
+              <td style={td}>{currency(po.vat_amount)}</td>
+              <td style={td}>{currency(po.gross_amount)}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+
       <Section title="Projects from Supabase">
         <ul>
           {projects.map((p) => (
@@ -168,7 +218,9 @@ function Table({ headers, children }) {
       <thead>
         <tr style={{ background: "#111827", color: "white" }}>
           {headers.map((h) => (
-            <th key={h} style={th}>{h}</th>
+            <th key={h} style={th}>
+              {h}
+            </th>
           ))}
         </tr>
       </thead>
@@ -200,7 +252,4 @@ const th = {
 const td = {
   padding: 12,
   border: "1px solid #ddd",
-};const { data, error } = await supabase
-  .from("purchase_orders")
-  .select("*")
-  .order("po_date", { ascending: false });
+};

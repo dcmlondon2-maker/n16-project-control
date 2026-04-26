@@ -21,6 +21,7 @@ export default function App() {
   const [budgets, setBudgets] = useState([]);
   const [labour, setLabour] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [profitData, setProfitData] = useState([]);
 
   useEffect(() => {
     async function loadData() {
@@ -39,14 +40,19 @@ export default function App() {
         .select("*")
         .order("id");
 
-      const { data: poData, error: poError } = await supabase
+      const { data: poData } = await supabase
         .from("purchase_orders")
         .select("*")
         .order("po_date", { ascending: false });
 
-      if (projectError || poError) {
+      const { data: profitRows } = await supabase
+        .from("profit_tracker")
+        .select("*")
+        .order("id");
+
+      if (projectError) {
         setConnection("Database error");
-        console.error(projectError || poError);
+        console.error(projectError);
         return;
       }
 
@@ -54,6 +60,7 @@ export default function App() {
       setBudgets(budgetData || []);
       setLabour(labourData || []);
       setPurchaseOrders(poData || []);
+      setProfitData(profitRows || []);
       setConnection("Supabase connected successfully.");
     }
 
@@ -65,6 +72,20 @@ export default function App() {
   const totalRemaining = budgets.reduce((s, b) => s + Number(b.remaining || 0), 0);
   const totalLabour = labour.reduce((s, l) => s + Number(l.total_cost || 0), 0);
   const totalPOs = purchaseOrders.reduce((s, p) => s + Number(p.gross_amount || 0), 0);
+
+  const latestProfit = profitData[0] || {};
+
+  const liveProfit =
+    Number(latestProfit.contract_value || 0) -
+    Number(latestProfit.budget_cost || 0) -
+    Number(totalLabour || 0) -
+    Number(totalPOs || 0) -
+    Number(latestProfit.other_cost || 0);
+
+  const margin =
+    Number(latestProfit.contract_value || 0) > 0
+      ? ((liveProfit / Number(latestProfit.contract_value)) * 100).toFixed(1)
+      : 0;
 
   return (
     <div style={{ padding: 40, fontFamily: "Arial", background: "#f7f7f7" }}>
@@ -150,6 +171,25 @@ export default function App() {
               <td style={td}>{currency(po.gross_amount)}</td>
             </tr>
           ))}
+        </Table>
+      </Section>
+
+      <Section title="Profit Tracker">
+        <div style={grid3}>
+          <Card title="Contract Value" value={currency(latestProfit.contract_value)} />
+          <Card title="Live Profit" value={currency(liveProfit)} />
+          <Card title="Margin %" value={`${margin}%`} />
+        </div>
+
+        <Table headers={["Contract", "Budget", "Labour", "PO Cost", "Other", "Profit"]}>
+          <tr>
+            <td style={td}>{currency(latestProfit.contract_value)}</td>
+            <td style={td}>{currency(latestProfit.budget_cost)}</td>
+            <td style={td}>{currency(totalLabour)}</td>
+            <td style={td}>{currency(totalPOs)}</td>
+            <td style={td}>{currency(latestProfit.other_cost)}</td>
+            <td style={td}>{currency(liveProfit)}</td>
+          </tr>
         </Table>
       </Section>
 

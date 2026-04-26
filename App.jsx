@@ -31,6 +31,7 @@ export default function App() {
   const [subcontractors, setSubcontractors] = useState([]);
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [siteReport, setSiteReport] = useState("");
 
   const [diaryForm, setDiaryForm] = useState({
     diary_date: today,
@@ -78,8 +79,7 @@ export default function App() {
   }, []);
 
   function startVoice(target, field) {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Voice entry is not supported in this browser. Try Chrome.");
@@ -132,6 +132,46 @@ export default function App() {
       voice_note: "",
     });
     loadData();
+  }
+
+  function generateSiteReport() {
+    const latest = diaryEntries[0];
+
+    if (!latest) {
+      setSiteReport("No site diary entries found yet.");
+      return;
+    }
+
+    const report = `
+Site Report — ${latest.diary_date}
+
+Weather: ${latest.weather || "Not recorded"}.
+
+Labour on site: ${latest.labour_on_site || "Not recorded"}.
+
+Works completed: ${latest.work_completed || "No works recorded"}.
+
+Issues / delays: ${latest.issues || "No issues recorded"}.
+
+Voice note: ${latest.voice_note || "No voice note recorded"}.
+
+Summary: Works progressed on site. Labour attendance, weather conditions and site issues have been recorded for project control and future reference.
+    `;
+
+    setSiteReport(report.trim());
+  }
+
+  function readAloud() {
+    if (!siteReport) {
+      alert("Generate a site report first.");
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(siteReport);
+    utterance.lang = "en-GB";
+    utterance.rate = 0.95;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
   }
 
   const totalBudget = budgets.reduce((s, b) => s + Number(b.budget || 0), 0);
@@ -189,11 +229,7 @@ export default function App() {
 
       <div style={tabsStyle}>
         {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={activeTab === tab ? activeTabButton : tabButton}
-          >
+          <button key={tab} onClick={() => setActiveTab(tab)} style={activeTab === tab ? activeTabButton : tabButton}>
             {tab}
           </button>
         ))}
@@ -230,16 +266,6 @@ export default function App() {
             <Card title="Spent" value={currency(totalSpent)} />
             <Card title="Remaining" value={currency(totalRemaining)} />
           </div>
-          <Table headers={["Trade", "Budget", "Spent", "Remaining"]}>
-            {budgets.map((b) => (
-              <tr key={b.id}>
-                <td style={td}>{b.trade}</td>
-                <td style={td}>{currency(b.budget)}</td>
-                <td style={td}>{currency(b.spent)}</td>
-                <td style={td}>{currency(b.remaining)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -250,16 +276,6 @@ export default function App() {
             <Card title="Entries" value={labour.length} />
             <Card title="Avg" value={currency(labour.length ? totalLabour / labour.length : 0)} />
           </div>
-          <Table headers={["Employee", "Days", "Day Rate", "Total"]}>
-            {labour.map((l) => (
-              <tr key={l.id}>
-                <td style={td}>{l.employee || l.worker || "Labour"}</td>
-                <td style={td}>{l.days_worked}</td>
-                <td style={td}>{currency(l.day_rate)}</td>
-                <td style={td}>{currency(l.total_cost)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -270,17 +286,6 @@ export default function App() {
             <Card title="PO Count" value={purchaseOrders.length} />
             <Card title="Latest" value={purchaseOrders[0]?.po_number || "None"} />
           </div>
-          <Table headers={["PO No", "Supplier", "Trade", "Status", "Gross"]}>
-            {purchaseOrders.map((po) => (
-              <tr key={po.id}>
-                <td style={td}>{po.po_number}</td>
-                <td style={td}>{po.supplier}</td>
-                <td style={td}>{po.trade}</td>
-                <td style={td}>{po.status}</td>
-                <td style={td}>{currency(po.gross_amount)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -291,17 +296,6 @@ export default function App() {
             <Card title="Paid" value={currency(totalPaid)} />
             <Card title="Outstanding" value={currency(totalOutstanding)} />
           </div>
-          <Table headers={["Invoice", "Client", "Status", "Gross", "Paid"]}>
-            {invoices.map((i) => (
-              <tr key={i.id}>
-                <td style={td}>{i.invoice_number}</td>
-                <td style={td}>{i.client}</td>
-                <td style={td}>{i.status}</td>
-                <td style={td}>{currency(i.gross_amount)}</td>
-                <td style={td}>{currency(i.paid_amount)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -312,16 +306,6 @@ export default function App() {
             <Card title="Approved" value={currency(approvedVariations)} />
             <Card title="Count" value={variations.length} />
           </div>
-          <Table headers={["Variation", "Description", "Status", "Gross"]}>
-            {variations.map((v) => (
-              <tr key={v.id}>
-                <td style={td}>{v.variation_number}</td>
-                <td style={td}>{v.description}</td>
-                <td style={td}>{v.status}</td>
-                <td style={td}>{currency(v.gross_amount)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -332,18 +316,6 @@ export default function App() {
             <Card title="Subbies Paid" value={currency(totalSubbiesPaid)} />
             <Card title="Outstanding" value={currency(totalSubbiesOutstanding)} />
           </div>
-          <Table headers={["Subcontractor", "Trade", "Ref", "Status", "Gross", "Paid"]}>
-            {subcontractors.map((s) => (
-              <tr key={s.id}>
-                <td style={td}>{s.subcontractor}</td>
-                <td style={td}>{s.trade}</td>
-                <td style={td}>{s.payment_reference}</td>
-                <td style={td}>{s.status}</td>
-                <td style={td}>{currency(s.gross_amount)}</td>
-                <td style={td}>{currency(s.paid_amount)}</td>
-              </tr>
-            ))}
-          </Table>
         </Section>
       )}
 
@@ -368,6 +340,15 @@ export default function App() {
 
           <button style={button} onClick={() => startVoice("diary", "voice_note")}>🎤 Voice Entry</button>
           <button style={buttonDark} onClick={saveDiary}>Save Diary</button>
+          <button style={buttonDark} onClick={generateSiteReport}>Generate Site Report</button>
+          <button style={button} onClick={readAloud}>🔊 Read Aloud</button>
+
+          {siteReport && (
+            <div style={reportBox}>
+              <h3>AI Site Report Summary</h3>
+              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "Arial" }}>{siteReport}</pre>
+            </div>
+          )}
 
           <Table headers={["Date", "Weather", "Labour", "Work", "Issues", "Voice Note"]}>
             {diaryEntries.map((d) => (
@@ -533,6 +514,7 @@ const areaStyle = {
 const button = {
   padding: "10px 14px",
   marginRight: 10,
+  marginTop: 8,
   borderRadius: 8,
   border: "1px solid #ccc",
   background: "white",
@@ -543,4 +525,12 @@ const buttonDark = {
   ...button,
   background: "#111827",
   color: "white",
+};
+
+const reportBox = {
+  marginTop: 20,
+  padding: 20,
+  background: "#f3f4f6",
+  borderRadius: 12,
+  border: "1px solid #ddd",
 };

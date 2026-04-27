@@ -35,7 +35,10 @@ export default function App() {
   const [expenses, setExpenses] = useState([]);
   const [snags, setSnags] = useState([]);
   const [siteReport, setSiteReport] = useState("");
-
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiReply, setAiReply] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  
   const [projectForm, setProjectForm] = useState({
     name: "",
     client_name: "",
@@ -402,8 +405,28 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     `;
     setSiteReport(report.trim());
   }
+async function askAI() {
+  if (!aiPrompt.trim()) return;
 
-  function readAloud() {
+  setAiLoading(true);
+
+  try {
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt: aiPrompt }),
+    });
+
+    const data = await response.json();
+    setAiReply(data.reply || "No reply.");
+  } catch (error) {
+    setAiReply("AI failed.");
+  }
+
+  setAiLoading(false);
+}  function readAloud() {
     if (!siteReport) {
       alert("Generate a site report first.");
       return;
@@ -474,7 +497,7 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
 
   const margin = contractWithVariations > 0 ? ((liveProfit / contractWithVariations) * 100).toFixed(1) : 0;
 
-  const tabs = ["Dashboard", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
+  const tabs = ["Dashboard", "AI Assistant", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
 
   return (
     <div style={{ padding: 30, fontFamily: "Arial", background: "#f7f7f7", minHeight: "100vh" }}>
@@ -489,8 +512,24 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
       </div>
 
       <ProjectSelector projects={projects} activeProjectId={activeProjectId} setActiveProjectId={setActiveProjectId} activeProject={activeProject} setActiveTab={setActiveTab} />
+{activeTab === "AI Assistant" && (
+  <Section title="AI Assistant">
+    <FormArea
+      label="Ask AI"
+      value={aiPrompt}
+      onChange={setAiPrompt}
+    />
+    <button style={buttonDark} onClick={askAI}>
+      {aiLoading ? "Thinking..." : "Ask AI"}
+    </button>
 
-      {activeTab === "Dashboard" && (
+    <div style={reportBox}>
+      <pre style={{ whiteSpace: "pre-wrap" }}>
+        {aiReply}
+      </pre>
+    </div>
+  </Section>
+)}      {activeTab === "Dashboard" && (
         <>
           <div style={grid4}>
             <Card title="Contract + Variations" value={currency(contractWithVariations)} />

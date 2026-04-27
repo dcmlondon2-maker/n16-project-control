@@ -824,11 +824,3 @@ const warningBox = {
   borderRadius: 8
 };
 
-const successBox = {
-  padding: 12,
-  background: "#ecfdf5",
-  border: "1px solid #bbf7d0",
-  borderRadius: 8
-};
-
-export default App;

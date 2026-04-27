@@ -5,25 +5,23 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
-
+    const lower = prompt.toLowerCase();
     let reply = "";
 
-    const lower = prompt.toLowerCase();
-
-    if (lower.includes("profit")) {
-      reply = "Your profit tab tracks live project margin and forecast profit. Review labour, purchase orders and subcontractor costs to improve margin.";
-    } else if (lower.includes("invoice")) {
-      reply = "Your invoice tracker shows amounts invoiced, paid and outstanding. Chase overdue invoices to improve cashflow.";
-    } else if (lower.includes("snag")) {
-      reply = "Your snagging tracker can prioritise defects by urgency and assigned contractor.";
-    } else if (lower.includes("variation")) {
-      reply = "Monitor submitted and approved variations closely to protect profit.";
+    if (lower.includes("setup") || lower.includes("new project")) {
+      reply = "To set up a project: go to Projects tab, click Add Project, enter client, address, contract value and dates.";
     } else if (lower.includes("budget")) {
-      reply = "Review overspend areas in the budget tracker and compare against contract value.";
-    } else if (lower.includes("site")) {
-      reply = "Use site diary reports to summarise labour, weather, completed works and delays.";
+      reply = "Use the Budget tab to enter trade budgets and monitor spent vs remaining.";
+    } else if (lower.includes("invoice")) {
+      reply = "Use Invoices tab to log applications, invoices, payments and outstanding balances.";
+    } else if (lower.includes("snag")) {
+      reply = "Use Snagging tab to log defects, assign responsibility and upload photos.";
+    } else if (lower.includes("site report")) {
+      reply = "Go to Site Diary, add entries, then click Generate Site Report.";
+    } else if (lower.includes("expense")) {
+      reply = "Use Expenses tab to upload receipts and track net, VAT and gross costs.";
     } else {
-      reply = "I can help with profit forecasting, budgets, invoices, variations, snags, subcontractor payments, expenses and site reports.";
+      reply = "I can help you set up projects, budgets, invoices, expenses, snags and site reports.";
     }
 
     res.status(200).json({ reply });

@@ -647,11 +647,7 @@ const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
           </div>
 
           <Section title="Cashflow Forecast">
-  const manualIn = manualCashflow
-  .filter((m) => {
-    const d = new Date(m.date);
-    return d >= weekStart && d <= weekEnd && m.type === "In";
-  })
+  
   .reduce((s, m) => s + Number(m.amount || 0), 0);
 
 const manualOut = manualCashflow

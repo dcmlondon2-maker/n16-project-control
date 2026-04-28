@@ -637,7 +637,7 @@ const lowestCashWeek = cashflowData.reduce(
     </ResponsiveContainer>
   </div>
 
-  <Table headers={["Week", "Cash In", "Cash Out", "Balance"]}>
+      <Table headers={["Week", "Cash In", "Cash Out", "Balance"]}>
     {cashflowData.map((row) => (
       <tr key={row.week}>
         <td style={td}>{row.week}</td>
@@ -648,6 +648,8 @@ const lowestCashWeek = cashflowData.reduce(
     ))}
   </Table>
 </Section>
+        </>
+      )}
       {activeTab === "Budget" && (
         <Section title="Budget by Trade">
           <div style={grid3}>

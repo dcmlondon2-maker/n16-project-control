@@ -10,12 +10,7 @@ const currency = (n) =>
 
 const today = new Date().toISOString().split("T")[0];
 
-const cashflowData = [
-  { week: 1, balance: 10000 },
-  { week: 5, balance: -5000 },
-  { week: 10, balance: 15000 },
-  { week: 15, balance: 20000 },
-];
+
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -35,7 +30,7 @@ export default function App() {
   const [expenses, setExpenses] = useState([]);
   const [snags, setSnags] = useState([]);
   const [siteReport, setSiteReport] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
+  const [openingBalance, setOpeningBalance] = useState(10000);  const [aiPrompt, setAiPrompt] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   
@@ -478,8 +473,82 @@ async function askAI() {
   const totalExpenseNet = projectExpenses.reduce((s, e) => s + Number(e.net_amount || 0), 0);
   const totalExpenseVat = projectExpenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
   const totalExpenseGross = projectExpenses.reduce((s, e) => s + Number(e.gross_amount || 0), 0);
+function addDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
 
-  const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
+function weekLabel(date) {
+  return `W/C ${date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+  })}`;
+}
+
+const cashflowData = Array.from({ length: 12 }, (_, index) => {
+  const weekStart = addDays(new Date(), index * 7);
+  const weekEnd = addDays(weekStart, 6);
+
+  const cashIn = projectInvoices
+    .filter((i) => {
+      const d = new Date(i.due_date || i.invoice_date);
+      return d >= weekStart && d <= weekEnd;
+    })
+    .reduce((s, i) => {
+      const outstanding = Number(i.gross_amount || 0) - Number(i.paid_amount || 0);
+      return s + Math.max(outstanding, 0);
+    }, 0);
+
+  const labourOut = projectLabour
+    .filter((l) => {
+      const d = new Date(l.week_ending || l.labour_date || l.date || today);
+      return d >= weekStart && d <= weekEnd;
+    })
+    .reduce((s, l) => s + Number(l.total_cost || 0), 0);
+
+  const expenseOut = projectExpenses
+    .filter((e) => {
+      const d = new Date(e.expense_date || today);
+      return d >= weekStart && d <= weekEnd && e.status !== "Paid";
+    })
+    .reduce((s, e) => s + Number(e.gross_amount || 0), 0);
+
+  const subbieOut = projectSubcontractors
+    .filter((x) => {
+      const d = new Date(x.due_date || x.invoice_date || today);
+      return d >= weekStart && d <= weekEnd;
+    })
+    .reduce((s, x) => {
+      const outstanding = Number(x.gross_amount || 0) - Number(x.paid_amount || 0);
+      return s + Math.max(outstanding, 0);
+    }, 0);
+
+  const poOut = projectPOs
+    .filter((p) => {
+      const d = new Date(p.delivery_date || p.po_date || today);
+      return d >= weekStart && d <= weekEnd;
+    })
+    .reduce((s, p) => s + Number(p.gross_amount || 0), 0);
+
+  return {
+    week: weekLabel(weekStart),
+    cashIn,
+    cashOut: labourOut + expenseOut + subbieOut + poOut,
+  };
+}).reduce((rows, row, index) => {
+  const previousBalance = index === 0 ? Number(openingBalance || 0) : rows[index - 1].balance;
+  rows.push({
+    ...row,
+    balance: previousBalance + row.cashIn - row.cashOut,
+  });
+  return rows;
+}, []);
+
+const lowestCashWeek = cashflowData.reduce(
+  (lowest, row) => (row.balance < lowest.balance ? row : lowest),
+  cashflowData[0]
+);  const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
   const closedSnags = projectSnags.filter((s) => s.status === "Closed").length;
   const highPrioritySnags = projectSnags.filter((s) => s.priority === "High").length;
 
@@ -539,20 +608,46 @@ async function askAI() {
           </div>
 
           <Section title="Cashflow Forecast">
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={cashflowData}>
-                  <XAxis dataKey="week" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="balance" stroke="#ff6600" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </Section>
-        </>
-      )}
+  <div style={formBox}>
+    <FormInput
+      label="Opening Bank Balance"
+      type="number"
+      value={openingBalance}
+      onChange={setOpeningBalance}
+    />
+  </div>
 
+  <div style={grid3}>
+    <Card title="Lowest Forecast Balance" value={currency(lowestCashWeek?.balance || 0)} />
+    <Card title="Lowest Week" value={lowestCashWeek?.week || "-"} />
+    <Card
+      title="Cashflow Status"
+      value={(lowestCashWeek?.balance || 0) < 0 ? "Warning: Goes Negative" : "Healthy"}
+    />
+  </div>
+
+  <div style={{ height: 300 }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={cashflowData}>
+        <XAxis dataKey="week" />
+        <YAxis />
+        <Tooltip formatter={(value) => currency(value)} />
+        <Line type="monotone" dataKey="balance" stroke="#ff6600" strokeWidth={3} />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+
+  <Table headers={["Week", "Cash In", "Cash Out", "Balance"]}>
+    {cashflowData.map((row) => (
+      <tr key={row.week}>
+        <td style={td}>{row.week}</td>
+        <td style={td}>{currency(row.cashIn)}</td>
+        <td style={td}>{currency(row.cashOut)}</td>
+        <td style={td}>{currency(row.balance)}</td>
+      </tr>
+    ))}
+  </Table>
+</Section>
       {activeTab === "Budget" && (
         <Section title="Budget by Trade">
           <div style={grid3}>

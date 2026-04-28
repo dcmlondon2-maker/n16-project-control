@@ -894,15 +894,12 @@ const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
         </Section>
       )}
     </div>
- 
-
 const lowestCashWeek = cashflowData.reduce(
   (lowest, row) => (row.balance < lowest.balance ? row : lowest),
   cashflowData[0]
 );
 
 const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
-
 function Header({ activeProject }) {
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>

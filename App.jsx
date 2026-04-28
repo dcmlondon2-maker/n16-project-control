@@ -38,7 +38,7 @@ const [cashflowForm, setCashflowForm] = useState({
   description: "",
   amount: ""
 });
-});  const [aiReply, setAiReply] = useState("");
+  const [aiReply, setAiReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   
   const [projectForm, setProjectForm] = useState({

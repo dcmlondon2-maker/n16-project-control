@@ -1,4 +1,4 @@
-‹import React, ‹‹333333{ useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 

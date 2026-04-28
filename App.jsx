@@ -647,21 +647,7 @@ const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
           </div>
 
           <Section title="Cashflow Forecast">
-  
-  .reduce((s, m) => s + Number(m.amount || 0), 0);
 
-const manualOut = manualCashflow
-  .filter((m) => {
-    const d = new Date(m.date);
-    return d >= weekStart && d <= weekEnd && m.type === "Out";
-  })
-  .reduce((s, m) => s + Number(m.amount || 0), 0);
-
-return {
-  week: weekLabel(weekStart),
-  cashIn: cashIn + manualIn,
-  cashOut: labourOut + expenseOut + subbieOut + poOut + manualOut,
-};
 
   <div style={grid3}>
     <Card title="Lowest Forecast Balance" value={currency(lowestCashWeek?.balance || 0)} />

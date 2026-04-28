@@ -894,7 +894,7 @@ const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
         </Section>
       )}
     </div>
-  );
+ 
 }
 const lowestCashWeek = cashflowData.reduce(
   (lowest, row) => (row.balance < lowest.balance ? row : lowest),

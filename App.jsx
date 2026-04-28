@@ -31,7 +31,14 @@ export default function App() {
   const [snags, setSnags] = useState([]);
   const [siteReport, setSiteReport] = useState("");
   const [openingBalance, setOpeningBalance] = useState(10000);  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiReply, setAiReply] = useState("");
+ const [manualCashflow, setManualCashflow] = useState([]);
+const [cashflowForm, setCashflowForm] = useState({
+  date: today,
+  type: "In",
+  description: "",
+  amount: ""
+});
+});  const [aiReply, setAiReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   
   const [projectForm, setProjectForm] = useState({
@@ -419,8 +426,32 @@ async function askAI() {
   } catch (error) {
     setAiReply("AI failed.");
   }
+function addManualCashflow() {
+  if (!cashflowForm.description || !cashflowForm.amount) {
+    alert("Description and amount required.");
+    return;
+  }
 
-  setAiLoading(false);
+  setManualCashflow([
+    ...manualCashflow,
+    {
+      id: Date.now(),
+      ...cashflowForm,
+      amount: Number(cashflowForm.amount || 0)
+    }
+  ]);
+
+  setCashflowForm({
+    date: today,
+    type: "In",
+    description: "",
+    amount: ""
+  });
+}
+
+function deleteManualCashflow(id) {
+  setManualCashflow(manualCashflow.filter((item) => item.id !== id));
+}  setAiLoading(false);
 }  function readAloud() {
     if (!siteReport) {
       alert("Generate a site report first.");
@@ -531,19 +562,25 @@ const cashflowData = Array.from({ length: 12 }, (_, index) => {
     })
     .reduce((s, p) => s + Number(p.gross_amount || 0), 0);
 
-  return {
-    week: weekLabel(weekStart),
-    cashIn,
-    cashOut: labourOut + expenseOut + subbieOut + poOut,
-  };
-}).reduce((rows, row, index) => {
-  const previousBalance = index === 0 ? Number(openingBalance || 0) : rows[index - 1].balance;
-  rows.push({
-    ...row,
-    balance: previousBalance + row.cashIn - row.cashOut,
-  });
-  return rows;
-}, []);
+  const manualIn = manualCashflow
+  .filter((m) => {
+    const d = new Date(m.date);
+    return d >= weekStart && d <= weekEnd && m.type === "In";
+  })
+  .reduce((s, m) => s + Number(m.amount || 0), 0);
+
+const manualOut = manualCashflow
+  .filter((m) => {
+    const d = new Date(m.date);
+    return d >= weekStart && d <= weekEnd && m.type === "Out";
+  })
+  .reduce((s, m) => s + Number(m.amount || 0), 0);
+
+return {
+  week: weekLabel(weekStart),
+  cashIn: cashIn + manualIn,
+  cashOut: labourOut + expenseOut + subbieOut + poOut + manualOut,
+};
 
 const lowestCashWeek = cashflowData.reduce(
   (lowest, row) => (row.balance < lowest.balance ? row : lowest),
@@ -608,14 +645,25 @@ const lowestCashWeek = cashflowData.reduce(
           </div>
 
           <Section title="Cashflow Forecast">
-  <div style={formBox}>
-    <FormInput
-      label="Opening Bank Balance"
-      type="number"
-      value={openingBalance}
-      onChange={setOpeningBalance}
-    />
-  </div>
+  const manualIn = manualCashflow
+  .filter((m) => {
+    const d = new Date(m.date);
+    return d >= weekStart && d <= weekEnd && m.type === "In";
+  })
+  .reduce((s, m) => s + Number(m.amount || 0), 0);
+
+const manualOut = manualCashflow
+  .filter((m) => {
+    const d = new Date(m.date);
+    return d >= weekStart && d <= weekEnd && m.type === "Out";
+  })
+  .reduce((s, m) => s + Number(m.amount || 0), 0);
+
+return {
+  week: weekLabel(weekStart),
+  cashIn: cashIn + manualIn,
+  cashOut: labourOut + expenseOut + subbieOut + poOut + manualOut,
+};
 
   <div style={grid3}>
     <Card title="Lowest Forecast Balance" value={currency(lowestCashWeek?.balance || 0)} />

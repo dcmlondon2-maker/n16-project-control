@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+‹import React, ‹‹333333{ useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 
@@ -896,9 +896,14 @@ const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
     </div>
   );
 }
+const lowestCashWeek = cashflowData.reduce(
+  (lowest, row) => (row.balance < lowest.balance ? row : lowest),
+  cashflowData[0]
+);
+
+const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
 
 function Header({ activeProject }) {
-  return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>
       <p style={{ marginBottom: 0 }}>Budget, cashflow, labour, POs, invoices, variations, expenses, snagging, diary and notes.</p>

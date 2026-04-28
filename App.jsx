@@ -585,7 +585,9 @@ return {
 const lowestCashWeek = cashflowData.reduce(
   (lowest, row) => (row.balance < lowest.balance ? row : lowest),
   cashflowData[0]
-);  const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
+);
+
+const openSnags = projectSnags.filter((s) => s.status !== "Closed").length;
   const closedSnags = projectSnags.filter((s) => s.status === "Closed").length;
   const highPrioritySnags = projectSnags.filter((s) => s.priority === "High").length;
 

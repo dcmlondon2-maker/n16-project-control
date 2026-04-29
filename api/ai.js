@@ -1,136 +1,15 @@
-const knowledgeBase = [
-  {
-    keywords: ["set up", "new project", "create project", "start project"],
-    reply: `To set up a new project:
-1. Go to Projects.
-2. Add project name, client, site address and contract value.
-3. Use contract value as SELL VALUE excluding VAT.
-4. Add start date and target completion date.
-5. Save the project.
-6. Select it from Project Control.
-7. Then add budget, labour, invoices, expenses, variations, snags and diary entries.`
-  },
-  {
-    keywords: ["budget", "cost", "costs", "allowance"],
-    reply: `Budget should mean COST, not sell price.
+import { createClient } from "@supabase/supabase-js";
 
-Use Budget for:
-- labour cost
-- materials cost
-- subcontractor cost
-- plant / hire
-- skips / waste
-- other job costs
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-Sell value belongs in the project contract value.`
-  },
-  {
-    keywords: ["vat", "tax"],
-    reply: `VAT should be kept separate.
-
-Best setup:
-- Contract value = sell value excluding VAT
-- VAT = 20%
-- Total including VAT = contract value + VAT
-
-VAT is not profit. It is money collected and passed on.`
-  },
-  {
-    keywords: ["cashflow", "cash flow", "money in", "money out"],
-    reply: `Cashflow means timing of money in and money out.
-
-Track:
-- expected client payments
-- labour payments
-- supplier payments
-- subcontractor payments
-- expenses
-- VAT due
-
-A project can show profit but still hurt you if cash comes in late.`
-  },
-  {
-    keywords: ["profit", "margin", "markup"],
-    reply: `Profit formula:
-
-Sell value ex VAT
-minus labour
-minus materials
-minus subcontractors
-minus expenses
-minus other costs
-= expected profit
-
-Margin = profit divided by sell value.`
-  },
-  {
-    keywords: ["invoice", "payment", "paid", "outstanding", "overdue"],
-    reply: `Invoice advice:
-1. Log invoice date.
-2. Enter gross amount.
-3. Add paid amount when payment arrives.
-4. Track outstanding.
-5. Chase anything overdue.
-
-Outstanding invoices are cash still owed to you.`
-  },
-  {
-    keywords: ["variation", "change", "extra work", "additional work"],
-    reply: `Variation advice:
-Log every change straight away.
-
-Track:
-- description
-- submitted value
-- approved value
-- status
-- date submitted
-
-Approved variations should increase your sell value and protect your profit.`
-  },
-  {
-    keywords: ["snag", "snags", "defect", "defects", "fault"],
-    reply: `Snagging advice:
-Add location, description, priority, assigned person and photo.
-
-Keep status as Open until actually completed.
-
-High-priority snags should be chased first.`
-  },
-  {
-    keywords: ["site diary", "diary", "report", "daily report"],
-    reply: `Site diary advice:
-Record daily:
-- weather
-- labour on site
-- work completed
-- delays
-- issues
-- instructions
-
-This protects you if there is a dispute later.`
-  }
-];
-
-const defaultReply = `I can help with:
-- setting up a new project
-- budget vs sell value
-- invoices and payment chasing
-- cashflow planning
-- profit and margin checks
-- variations
-- snags and defects
-- expenses and receipts
-- site diary reports`;
-
-function findBestReply(question) {
-  const q = String(question || "").toLowerCase();
-
-  const match = knowledgeBase.find(item =>
-    item.keywords.some(keyword => q.includes(keyword))
-  );
-
-  return match ? match.reply : defaultReply;
+function money(value) {
+  return `£${Number(value || 0).toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 export default async function handler(req, res) {
@@ -139,25 +18,113 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body;
+    const { prompt, projectId } = req.body;
+    const q = String(prompt || "").toLowerCase();
 
-    if (!prompt || typeof prompt !== "string") {
+    if (!projectId) {
       return res.status(400).json({
-        error: "Please provide a valid prompt."
+        reply: "Please select a project first.",
       });
     }
 
-    const reply = findBestReply(prompt);
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", projectId)
+      .single();
 
-    return res.status(200).json({
-      reply,
-      source: "project-control-assistant"
-    });
+    if (projectError || !project) {
+      return res.status(404).json({
+        reply: "I could not find that project.",
+      });
+    }
+
+    const { data: expenses = [] } = await supabase
+      .from("expenses")
+      .select("*")
+      .eq("project_id", projectId);
+
+    const { data: invoices = [] } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("project_id", projectId);
+
+    const { data: variations = [] } = await supabase
+      .from("variations")
+      .select("*")
+      .eq("project_id", projectId);
+
+    const sellValue = Number(project.contract_value || 0);
+
+    const totalExpenses = expenses.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+
+    const totalInvoiced = invoices.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+
+    const totalPaid = invoices.reduce(
+      (sum, item) => sum + Number(item.paid_amount || 0),
+      0
+    );
+
+    const unpaid = totalInvoiced - totalPaid;
+
+    const approvedVariations = variations
+      .filter(v => String(v.status || "").toLowerCase() === "approved")
+      .reduce((sum, item) => sum + Number(item.approved_value || 0), 0);
+
+    const adjustedSellValue = sellValue + approvedVariations;
+    const profit = adjustedSellValue - totalExpenses;
+    const margin = adjustedSellValue > 0 ? (profit / adjustedSellValue) * 100 : 0;
+
+    let reply = `Project summary for ${project.name}:
+
+Sell value: ${money(sellValue)}
+Approved variations: ${money(approvedVariations)}
+Adjusted sell value: ${money(adjustedSellValue)}
+Total expenses: ${money(totalExpenses)}
+Expected profit: ${money(profit)}
+Margin: ${margin.toFixed(1)}%
+Total invoiced: ${money(totalInvoiced)}
+Paid: ${money(totalPaid)}
+Outstanding: ${money(unpaid)}`;
+
+    if (q.includes("profit") || q.includes("margin")) {
+      reply = `Profit check for ${project.name}:
+
+Adjusted sell value: ${money(adjustedSellValue)}
+Total expenses: ${money(totalExpenses)}
+Expected profit: ${money(profit)}
+Margin: ${margin.toFixed(1)}%`;
+    }
+
+    if (q.includes("invoice") || q.includes("unpaid") || q.includes("payment")) {
+      reply = `Invoice check for ${project.name}:
+
+Total invoiced: ${money(totalInvoiced)}
+Paid so far: ${money(totalPaid)}
+Outstanding: ${money(unpaid)}
+
+${unpaid > 0 ? "There is still money to chase." : "All invoiced money appears paid."}`;
+    }
+
+    if (q.includes("variation")) {
+      reply = `Variation check for ${project.name}:
+
+Approved variations: ${money(approvedVariations)}
+
+Approved variations increase your sell value and help protect your profit.`;
+    }
+
+    return res.status(200).json({ reply });
   } catch (error) {
-    console.error("Assistant error:", error);
-
+    console.error(error);
     return res.status(500).json({
-      error: "Assistant failed."
+      reply: "Project AI failed.",
     });
   }
 }

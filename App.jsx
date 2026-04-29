@@ -664,9 +664,7 @@ const expectedMargin =
       </Table>
     </Section>
   </>
-)}
-        </Section>
-      )}
+
 
       {activeTab === "Invoices" && (
         <Section title="Invoice Tracker">

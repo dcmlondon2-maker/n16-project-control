@@ -613,58 +613,87 @@ const expectedMargin =
       </pre>
     </div>
   </Section>
-{activeTab === "Dashboard" && (
-  <>
-    <div style={grid4}>
-      <Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
-      <Card title="VAT @ 20%" value={currency(contractVat)} />
-      <Card title="Sell Value inc VAT" value={currency(contractIncVat)} />
-      <Card title="Expected Profit" value={currency(expectedProfit)} />
-    </div>
+)}      {activeTab === "Dashboard" && (
+        <>
+          <div style={grid4}>
+            <Card title="Contract + Variations" value={currency(contractWithVariations)} />
+            <Card title="Invoiced" value={currency(totalInvoiced)} />
+            <Card title="Outstanding" value={currency(totalOutstanding)} />
+            <Card title="Database" value={connection} small />
+          </div>
 
-    <Section title="Cashflow Forecast">
-      <div style={formBox}>
-        <FormInput
-          label="Opening Bank Balance"
-          type="number"
-          value={openingBalance}
-          onChange={setOpeningBalance}
-        />
-      </div>
+          <Section title="Cashflow Forecast">
+  <div style={formBox}>
+    <FormInput
+      label="Opening Bank Balance"
+      type="number"
+      value={openingBalance}
+      onChange={setOpeningBalance}
+    />
+  </div>
 
-      <div style={grid3}>
-        <Card title="Lowest Forecast Balance" value={currency(lowestCashWeek?.balance || 0)} />
-        <Card title="Lowest Week" value={lowestCashWeek?.week || "-"} />
-        <Card
-          title="Cashflow Status"
-          value={(lowestCashWeek?.balance || 0) < 0 ? "Warning: Goes Negative" : "Healthy"}
-        />
-      </div>
+  <div style={grid3}>
+    <Card title="Lowest Forecast Balance" value={currency(lowestCashWeek?.balance || 0)} />
+    <Card title="Lowest Week" value={lowestCashWeek?.week || "-"} />
+    <Card
+      title="Cashflow Status"
+      value={(lowestCashWeek?.balance || 0) < 0 ? "Warning: Goes Negative" : "Healthy"}
+    />
+  </div>
 
-      <div style={{ height: 300 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={cashflowData}>
-            <XAxis dataKey="week" />
-            <YAxis />
-            <Tooltip formatter={(value) => currency(value)} />
-            <Line type="monotone" dataKey="balance" stroke="#ff6600" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+  <div style={{ height: 300 }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={cashflowData}>
+        <XAxis dataKey="week" />
+        <YAxis />
+        <Tooltip formatter={(value) => currency(value)} />
+        <Line type="monotone" dataKey="balance" stroke="#ff6600" strokeWidth={3} />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
 
       <Table headers={["Week", "Cash In", "Cash Out", "Balance"]}>
-        {cashflowData.map((row) => (
-          <tr key={row.week}>
-            <td style={td}>{row.week}</td>
-            <td style={td}>{currency(row.cashIn)}</td>
-            <td style={td}>{currency(row.cashOut)}</td>
-            <td style={td}>{currency(row.balance)}</td>
-          </tr>
-        ))}
-      </Table>
-    </Section>
-  </>
+    {cashflowData.map((row) => (
+      <tr key={row.week}>
+        <td style={td}>{row.week}</td>
+        <td style={td}>{currency(row.cashIn)}</td>
+        <td style={td}>{currency(row.cashOut)}</td>
+        <td style={td}>{currency(row.balance)}</td>
+      </tr>
+    ))}
+  </Table>
+</Section>
+        </>
+      )}
+      {activeTab === "Budget" && (
+        <Section title="Budget by Trade">
+          <div style={grid3}>
+            <Card title="Budget" value={currency(totalBudget)} />
+            <Card title="Spent" value={currency(totalSpent)} />
+            <Card title="Remaining" value={currency(totalRemaining)} />
+          </div>
+        </Section>
+      )}
 
+      {activeTab === "Labour" && (
+        <Section title="Labour Tracker">
+          <div style={grid3}>
+            <Card title="Labour" value={currency(totalLabour)} />
+            <Card title="Entries" value={projectLabour.length} />
+            <Card title="Avg" value={currency(projectLabour.length ? totalLabour / projectLabour.length : 0)} />
+          </div>
+        </Section>
+      )}
+
+      {activeTab === "POs" && (
+        <Section title="PO Tracker">
+          <div style={grid3}>
+            <Card title="PO Value" value={currency(totalPOs)} />
+            <Card title="PO Count" value={projectPOs.length} />
+            <Card title="Latest" value={projectPOs[0]?.po_number || "None"} />
+          </div>
+        </Section>
+      )}
 
       {activeTab === "Invoices" && (
         <Section title="Invoice Tracker">
@@ -679,9 +708,11 @@ const expectedMargin =
       {activeTab === "Variations" && (
         <Section title="Variation Tracker">
           <div style={grid3}>
-            <<Card title="Variations" value={currency(totalVariations)} />
-<Card title="Approved" value={currency(approvedVariations)} />
-<Card title="Count" value={projectVariations.length} />
+            <Card title="Variations" value={currency(totalVariations)} />
+            <Card title="Approved" value={currency(approvedVariations)} />
+            <Card title="Count" value={projectVariations.length} />
+          </div>
+        </Section>
       )}
 
       {activeTab === "Subbies" && (

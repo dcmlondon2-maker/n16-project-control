@@ -708,11 +708,10 @@ const expectedMargin =
       {activeTab === "Variations" && (
         <Section title="Variation Tracker">
           <div style={grid3}>
-            <Card title="Variations" value={currency(totalVariations)} />
-            <Card title="Approved" value={currency(approvedVariations)} />
-            <Card title="Count" value={projectVariations.length} />
-          </div>
-        </Section>
+            <Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
+<Card title="VAT @ 20%" value={currency(contractVat)} />
+<Card title="Sell Value inc VAT" value={currency(contractIncVat)} />
+<Card title="Expected Profit" value={currency(expectedProfit)} />
       )}
 
       {activeTab === "Subbies" && (

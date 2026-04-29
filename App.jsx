@@ -616,7 +616,7 @@ const expectedMargin =
 )}      {activeTab === "Dashboard" && (
         <>
           <div style={grid4}>
-            <Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
+            <<Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
 <Card title="VAT @ 20%" value={currency(contractVat)} />
 <Card title="Sell Value inc VAT" value={currency(contractIncVat)} />
 <Card title="Expected Profit" value={currency(expectedProfit)} />

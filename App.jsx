@@ -554,8 +554,23 @@ const lowestCashWeek = cashflowData.reduce(
 
   const latestProfit = projectProfitData[0] || {};
   const contractWithVariations = Number(activeProject?.contract_value || latestProfit.contract_value || 0) + approvedVariations;
+const vatRate = 20;
+const contractVat = contractWithVariations * (vatRate / 100);
+const contractIncVat = contractWithVariations + contractVat;
 
-  const liveProfit =
+const totalProjectCosts =
+  Number(latestProfit.budget_cost || 0) +
+  totalLabour +
+  totalPOs +
+  totalSubbies +
+  totalExpenseGross +
+  Number(latestProfit.other_cost || 0);
+
+const expectedProfit = contractWithVariations - totalProjectCosts;
+const expectedMargin =
+  contractWithVariations > 0
+    ? ((expectedProfit / contractWithVariations) * 100).toFixed(1)
+    : 0;  const liveProfit =
     contractWithVariations -
     Number(latestProfit.budget_cost || 0) -
     totalLabour -

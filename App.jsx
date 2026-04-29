@@ -616,10 +616,10 @@ const expectedMargin =
 )}      {activeTab === "Dashboard" && (
         <>
           <div style={grid4}>
-            <Card title="Contract + Variations" value={currency(contractWithVariations)} />
-            <Card title="Invoiced" value={currency(totalInvoiced)} />
-            <Card title="Outstanding" value={currency(totalOutstanding)} />
-            <Card title="Database" value={connection} small />
+            <<Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
+<Card title="VAT @ 20%" value={currency(contractVat)} />
+<Card title="Sell Value inc VAT" value={currency(contractIncVat)} />
+<Card title="Expected Profit" value={currency(expectedProfit)} />
           </div>
 
           <Section title="Cashflow Forecast">
@@ -708,10 +708,9 @@ const expectedMargin =
       {activeTab === "Variations" && (
         <Section title="Variation Tracker">
           <div style={grid3}>
-            <Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />
-<Card title="VAT @ 20%" value={currency(contractVat)} />
-<Card title="Sell Value inc VAT" value={currency(contractIncVat)} />
-<Card title="Expected Profit" value={currency(expectedProfit)} />
+            <<Card title="Variations" value={currency(totalVariations)} />
+<Card title="Approved" value={currency(approvedVariations)} />
+<Card title="Count" value={projectVariations.length} />
       )}
 
       {activeTab === "Subbies" && (

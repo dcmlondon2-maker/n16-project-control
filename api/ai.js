@@ -7,50 +7,131 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     const q = String(prompt || "").toLowerCase();
 
-    let reply = "I can help you set up projects, budgets, invoices, cashflow, variations, snags, expenses, site diary notes and profit checks.";
+    let reply = `I can help with:
+- setting up a new project
+- budget vs sell value
+- invoices and payment chasing
+- cashflow planning
+- profit and margin checks
+- variations
+- snags and defects
+- expenses and receipts
+- site diary reports`;
 
-    if (q.includes("set up") || q.includes("new project") || q.includes("project")) {
+    if (q.includes("set up") || q.includes("new project")) {
       reply = `To set up a new project:
 1. Go to Projects.
 2. Add project name, client, site address and contract value.
-3. Add start and target completion dates.
-4. Save it.
-5. Select it from Project Control.
-6. Then add budget, invoices, expenses, snags and diary entries against that project.`;
+3. Use contract value as SELL VALUE excluding VAT.
+4. Add start date and target completion date.
+5. Save the project.
+6. Select it from Project Control.
+7. Then add budget, labour, invoices, expenses, variations, snags and diary entries.`;
+    }
+
+    if (q.includes("budget") || q.includes("cost")) {
+      reply = `Budget should mean COST, not sell price.
+
+Use Budget for:
+- labour cost
+- materials cost
+- subcontractor cost
+- plant / hire
+- skips / waste
+- other job costs
+
+Sell value belongs in the project contract value.
+
+Example:
+Sell value: £100,000 ex VAT
+Budgeted cost: £72,000
+Expected profit: £28,000`;
+    }
+
+    if (q.includes("vat")) {
+      reply = `VAT should be kept separate.
+
+Best setup:
+- Contract value = sell value excluding VAT
+- VAT = 20%
+- Total including VAT = contract value + VAT
+
+VAT is not profit. It is money collected and passed on.`;
     }
 
     if (q.includes("cashflow") || q.includes("cash flow")) {
-      reply = `Cashflow setup:
-1. Add your opening bank/project balance.
-2. Enter expected client payments from invoices.
-3. Add upcoming labour, supplier, subbie and expense payments.
-4. Watch the forecast balance.
-5. If it goes negative, chase invoices, delay non-critical spend or bring payment applications forward.`;
+      reply = `Cashflow means timing of money in and money out.
+
+Track:
+- expected client payments
+- labour payments
+- supplier payments
+- subcontractor payments
+- expenses
+- VAT due
+
+A project can show profit but still hurt you if cash comes in late.`;
     }
 
     if (q.includes("profit") || q.includes("margin")) {
-      reply = `Profit check:
-Compare contract value plus approved variations against labour, POs, subbies, expenses and other costs. If margin is dropping, check overspending trades, unpaid variations and labour creep first.`;
+      reply = `Profit formula:
+
+Sell value ex VAT
+minus labour
+minus materials
+minus subcontractors
+minus expenses
+minus other costs
+= expected profit
+
+Margin = profit divided by sell value.`;
     }
 
     if (q.includes("invoice") || q.includes("payment")) {
       reply = `Invoice advice:
-Log invoice date, gross amount, paid amount and due date. Chase anything overdue. Your outstanding total shows cash still to collect.`;
-    }
+1. Log invoice date.
+2. Enter gross amount.
+3. Add paid amount when payment arrives.
+4. Track outstanding.
+5. Chase anything overdue.
 
-    if (q.includes("snag") || q.includes("defect")) {
-      reply = `Snagging advice:
-Add location, description, priority, status and assigned person. Use photos where possible. Close snags only when confirmed complete.`;
-    }
-
-    if (q.includes("site diary") || q.includes("diary") || q.includes("report")) {
-      reply = `Site diary advice:
-Record weather, labour on site, work completed, delays and issues daily. Then generate a site report for client records and dispute protection.`;
+Outstanding invoices are cash still owed to you.`;
     }
 
     if (q.includes("variation")) {
       reply = `Variation advice:
-Log every change immediately. Track submitted, approved and rejected values. Approved variations should increase your contract value and protect profit.`;
+Log every change straight away.
+
+Track:
+- description
+- submitted value
+- approved value
+- status
+- date submitted
+
+Approved variations should increase your sell value and protect your profit.`;
+    }
+
+    if (q.includes("snag") || q.includes("defect")) {
+      reply = `Snagging advice:
+Add location, description, priority, assigned person and photo.
+
+Keep status as Open until actually completed.
+
+High-priority snags should be chased first.`;
+    }
+
+    if (q.includes("site diary") || q.includes("diary") || q.includes("report")) {
+      reply = `Site diary advice:
+Record daily:
+- weather
+- labour on site
+- work completed
+- delays
+- issues
+- instructions
+
+This protects you if there is a dispute later.`;
     }
 
     res.status(200).json({ reply });

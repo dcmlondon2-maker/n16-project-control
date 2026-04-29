@@ -411,7 +411,23 @@ async function askAI() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt: aiPrompt }),
+      body: JSON.stringify({
+  prompt: aiPrompt,
+  context: {
+    projectName: activeProject?.name || "All Projects",
+    sellValue: contractWithVariations,
+    labour: totalLabour,
+    purchaseOrders: totalPOs,
+    subbies: totalSubbies,
+    expenses: totalExpenseGross,
+    otherCosts: Number(latestProfit.other_cost || 0),
+    invoices: totalInvoiced,
+    paid: totalPaid,
+    outstanding: totalOutstanding,
+    openSnags,
+    highPrioritySnags
+  }
+}),
     });
 
     const data = await response.json();

@@ -613,7 +613,7 @@ const expectedMargin =
       </pre>
     </div>
   </Section>
-{activeTab === "Dashboard" && (
+(  
   <>
     <div style={grid4}>
       <Card title="Sell Value ex VAT" value={currency(contractWithVariations)} />

@@ -610,7 +610,7 @@ const expectedMargin =
 
   const margin = contractWithVariations > 0 ? ((liveProfit / contractWithVariations) * 100).toFixed(1) : 0;
 
-  const tabs = ["Dashboard", "AI Assistant", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
+  const tabs = ["All Projects Overview", "Dashboard", "AI Assistant", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
 
 async function saveCashflowOverride(row, field, value) {
   if (!requireProject()) return;
@@ -676,8 +676,50 @@ async function saveCashflowOverride(row, field, value) {
         {aiReply}
       </pre>
     </div>
+ </Section>
+)}
+
+{activeTab === "All Projects Overview" && (
+  <Section title="All Projects Overview">
+    <div style={grid4}>
+      <Card title="Total Contract Value" value={currency(projects.reduce((s, p) => s + Number(p.contract_value || 0), 0))} />
+      <Card title="Total Invoiced" value={currency(invoices.reduce((s, i) => s + Number(i.gross_amount || 0), 0))} />
+      <Card title="Total Paid" value={currency(invoices.reduce((s, i) => s + Number(i.paid_amount || 0), 0))} />
+      <Card title="Total Outstanding" value={currency(invoices.reduce((s, i) => s + (Number(i.gross_amount || 0) - Number(i.paid_amount || 0)), 0))} />
+    </div>
+
+    <Table headers={["Project", "Contract", "Invoiced", "Paid", "Outstanding"]}>
+      {projects.map((project) => {
+        const projectInvoicesAll = invoices.filter(
+          (i) => String(i.project_id || "") === String(project.id)
+        );
+
+        const invoiced = projectInvoicesAll.reduce(
+          (s, i) => s + Number(i.gross_amount || 0),
+          0
+        );
+
+        const paid = projectInvoicesAll.reduce(
+          (s, i) => s + Number(i.paid_amount || 0),
+          0
+        );
+
+        return (
+          <tr key={project.id}>
+            <td style={td}>{project.name}</td>
+            <td style={td}>{currency(project.contract_value)}</td>
+            <td style={td}>{currency(invoiced)}</td>
+            <td style={td}>{currency(paid)}</td>
+            <td style={td}>{currency(invoiced - paid)}</td>
+          </tr>
+        );
+      })}
+    </Table>
   </Section>
-)}      {activeTab === "Dashboard" && (
+)}
+
+{activeTab === "Dashboard" && (
+  <>
         <>
           <div style={grid4}>
             <Card title="Contract + Variations" value={currency(contractWithVariations)} />

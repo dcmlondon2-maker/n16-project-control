@@ -720,7 +720,7 @@ async function saveCashflowOverride(row, field, value) {
 
 {activeTab === "Dashboard" && (
   <>
-        <>
+        
           <div style={grid4}>
             <Card title="Contract + Variations" value={currency(contractWithVariations)} />
             <Card title="Invoiced" value={currency(totalInvoiced)} />

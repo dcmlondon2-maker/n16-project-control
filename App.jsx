@@ -616,17 +616,34 @@ async function saveCashflowOverride(row, field, value) {
     (o) => o.week_label === row.week
   );
 
-  const payload = {
-    project_id: Number(activeProjectId),
-    week_label: row.week,
-    cash_in_override:
-      field === "cashIn"
-        ? Number(value || 0)
-        : existing?.cash_in_override ?? row.cashIn,
-    cash_out_override:
-      field === "cashOut"
-        ? Number(value || 0)
-        : existing
+ const payload = {
+  project_id: Number(activeProjectId),
+  week_label: row.week,
+
+  cash_in_override:
+    field === "cashIn"
+      ? Number(value || 0)
+      : existing?.cash_in_override ?? row.cashIn,
+
+  cash_out_override:
+    field === "cashOut"
+      ? Number(value || 0)
+      : existing?.cash_out_override ?? row.cashOut,
+};
+
+  if (existing) {
+    await supabase
+      .from("cashflow_overrides")
+      .update(payload)
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("cashflow_overrides")
+      .insert([payload]);
+  }
+
+  loadData();
+}
   return (
     <div style={{ padding: 30, fontFamily: "Arial", background: "#f7f7f7", minHeight: "100vh" }}>
       <Header activeProject={activeProject} />

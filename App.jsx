@@ -104,8 +104,10 @@ export default function App() {
       const { data: noteRows } = await supabase.from("project_notes").select("*").order("note_date", { ascending: false });
       const { data: expenseRows } = await supabase.from("expenses_tracker").select("*").order("expense_date", { ascending: false });
       const { data: snagRows } = await supabase.from("snagging_tracker").select("*").order("snag_date", { ascending: false });
-
-      setProjects(projectData || []);
+      const { data: cashflowOverrideRows } = await supabase
+  .from("cashflow_overrides")
+  .select("*")
+  .order("id", { ascending: true });      setProjects(projectData || []);
       setBudgets(budgetData || []);
       setLabour(labourData || []);
       setPurchaseOrders(poData || []);
@@ -117,7 +119,7 @@ export default function App() {
       setNotes(noteRows || []);
       setExpenses(expenseRows || []);
       setSnags(snagRows || []);
-      setConnection("Supabase connected successfully.");
+      setCashflowOverrides(cashflowOverrideRows || []);      setConnection("Supabase connected successfully.");
     } catch (error) {
       console.error(error);
       setConnection("Database error. Check Supabase tables/columns.");
@@ -163,8 +165,7 @@ export default function App() {
   const projectNotes = byProject(notes);
   const projectExpenses = byProject(expenses);
   const projectSnags = byProject(snags);
-
-  async function saveProject() {
+  const projectCashflowOverrides = byProject(cashflowOverrides);  async function saveProject() {
     if (!projectForm.name) {
       alert("Project name is required.");
       return;
@@ -548,11 +549,19 @@ const cashflowData = Array.from({ length: 12 }, (_, index) => {
     })
     .reduce((s, p) => s + Number(p.gross_amount || 0), 0);
 
-  return {
-    week: weekLabel(weekStart),
-    cashIn,
-    cashOut: labourOut + expenseOut + subbieOut + poOut,
-  };
+  const calculatedCashOut = labourOut + expenseOut + subbieOut + poOut;
+  const week = weekLabel(weekStart);
+
+  const override = projectCashflowOverrides.find(
+  (o) => o.week_label === week
+);
+
+return {
+  week,
+  cashIn: override?.cash_in_override ?? cashIn,
+  cashOut: override?.cash_out_override ?? calculatedCashOut,
+  isOverridden: !!override,
+};
 }).reduce((rows, row, index) => {
   const previousBalance = index === 0 ? Number(openingBalance || 0) : rows[index - 1].balance;
   rows.push({

@@ -607,7 +607,7 @@ const expectedMargin =
 
   const margin = contractWithVariations > 0 ? ((liveProfit / contractWithVariations) * 100).toFixed(1) : 0;
 
-  const tabs = ["Dashboard", "AI Assistant", "Budget", ...];
+  const tabs = ["Dashboard", "AI Assistant", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
 
 async function saveCashflowOverride(row, field, value) {
   if (!requireProject()) return;

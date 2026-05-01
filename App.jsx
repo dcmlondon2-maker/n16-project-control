@@ -29,6 +29,7 @@ export default function App() {
   const [notes, setNotes] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [snags, setSnags] = useState([]);
+  const [cashflowOverrides, setCashflowOverrides] = useState([]);
   const [siteReport, setSiteReport] = useState("");
   const [openingBalance, setOpeningBalance] = useState(10000);  const [aiPrompt, setAiPrompt] = useState("");
   const [aiReply, setAiReply] = useState("");

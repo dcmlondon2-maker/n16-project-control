@@ -607,8 +607,26 @@ const expectedMargin =
 
   const margin = contractWithVariations > 0 ? ((liveProfit / contractWithVariations) * 100).toFixed(1) : 0;
 
-  const tabs = ["Dashboard", "AI Assistant", "Budget", "Labour", "POs", "Invoices", "Variations", "Subbies", "Expenses", "Snagging", "Profit", "Site Diary", "Notes", "Projects"];
+  const tabs = ["Dashboard", "AI Assistant", "Budget", ...];
 
+async function saveCashflowOverride(row, field, value) {
+  if (!requireProject()) return;
+
+  const existing = projectCashflowOverrides.find(
+    (o) => o.week_label === row.week
+  );
+
+  const payload = {
+    project_id: Number(activeProjectId),
+    week_label: row.week,
+    cash_in_override:
+      field === "cashIn"
+        ? Number(value || 0)
+        : existing?.cash_in_override ?? row.cashIn,
+    cash_out_override:
+      field === "cashOut"
+        ? Number(value || 0)
+        : existing
   return (
     <div style={{ padding: 30, fontFamily: "Arial", background: "#f7f7f7", minHeight: "100vh" }}>
       <Header activeProject={activeProject} />
@@ -680,12 +698,29 @@ const expectedMargin =
 
       <Table headers={["Week", "Cash In", "Cash Out", "Balance"]}>
     {cashflowData.map((row) => (
-      <tr key={row.week}>
-        <td style={td}>{row.week}</td>
-        <td style={td}>{currency(row.cashIn)}</td>
-        <td style={td}>{currency(row.cashOut)}</td>
-        <td style={td}>{currency(row.balance)}</td>
-      </tr>
+ <tr key={row.week}>
+  <td style={td}>{row.week}</td>
+
+  <td style={td}>
+    <input
+      type="number"
+      defaultValue={row.cashIn}
+      onBlur={(e) => saveCashflowOverride(row, "cashIn", e.target.value)}
+      style={{ width: "100%" }}
+    />
+  </td>
+
+  <td style={td}>
+    <input
+      type="number"
+      defaultValue={row.cashOut}
+      onBlur={(e) => saveCashflowOverride(row, "cashOut", e.target.value)}
+      style={{ width: "100%" }}
+    />
+  </td>
+
+  <td style={td}>{currency(row.balance)}</td>
+</tr>
     ))}
   </Table>
 </Section>

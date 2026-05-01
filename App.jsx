@@ -566,7 +566,10 @@ return {
   const previousBalance = index === 0 ? Number(openingBalance || 0) : rows[index - 1].balance;
   rows.push({
     ...row,
-    balance: previousBalance + row.cashIn - row.cashOut,
+    balance:
+  previousBalance +
+  Number(row.cashIn || 0) -
+  Number(row.cashOut || 0),
   });
   return rows;
 }, []);

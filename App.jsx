@@ -401,34 +401,51 @@ Voice note: ${latest.voice_note || "No voice note recorded"}.
 Summary: Works progressed on site. Labour attendance, weather conditions and site issues have been recorded for project control and future reference.
     `;
     setSiteReport(report.trim());
-  }async function createExpenseFromAI(promptText) {
+  }
+  async function createExpenseFromAI(promptText) {
   const amountMatch = promptText.match(/£?\s*(\d+(?:\.\d{1,2})?)/);
   const gross = amountMatch ? Number(amountMatch[1]) : 0;
 
-  const { error } = await supabase
-    .from("expenses_tracker")
-    .insert({
-      project_id: activeProjectId,
-      expense_date: new Date().toISOString().slice(0, 10),
-      supplier: "AI Entry",
-      category: "General",
-      description: promptText,
-      status: "Unpaid",
-      net_amount: gross,
-      vat_amount: 0,
-      gross_amount: gross,
-    });
-
-  if (error) {
-    alert("❌ Save failed: " + error.message);
-    console.error(error);
+  if (!gross) {
+    alert("No valid amount found.");
     return false;
   }
 
+  return await saveProjectRecord("expenses_tracker", {
+    expense_date: new Date().toISOString().slice(0, 10),
+    supplier: "AI Entry",
+    category: "General",
+    description: promptText,
+    status: "Unpaid",
+    net_amount: gross,
+    vat_amount: 0,
+    gross_amount: gross,
+  });
+}
   return true;
 }
+async function saveProjectRecord(tableName, payload) {
+  if (!activeProjectId) {
+    alert("Select a project first.");
+    return false;
+  }
 
-async function askAI() {
+  const { error } = await supabase
+    .from(tableName)
+    .insert({
+      ...payload,
+      project_id: activeProjectId,
+    });
+
+  if (error) {
+    console.error(error);
+    alert("Save failed: " + error.message);
+    return false;
+  }
+
+  await loadData();
+  return true;
+}async function askAI() {
   if (!aiPrompt.trim()) return;
 
   setAiLoading(true);

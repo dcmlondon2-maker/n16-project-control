@@ -438,7 +438,24 @@ setAiReply(reply);
 
 // TEMP: detect actions
 if (reply.toLowerCase().includes("add expense")) {
-  alert("AI wants to add an expense");
+  const amountMatch = reply.match(/(\d+)/);
+  const amount = amountMatch ? Number(amountMatch[1]) : 0;
+
+  await supabase.from("expenses_tracker").insert([
+    {
+      project_id: Number(activeProjectId),
+      expense_date: new Date().toISOString().split("T")[0],
+      supplier: "AI Entry",
+      description: reply,
+      net_amount: amount,
+      vat_amount: 0,
+      gross_amount: amount,
+      status: "Unpaid",
+    },
+  ]);
+
+  alert("Expense created from AI");
+  loadData();
 }
 
 if (reply.toLowerCase().includes("set cash in")) {

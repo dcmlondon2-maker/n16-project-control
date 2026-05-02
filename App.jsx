@@ -443,17 +443,16 @@ if (aiPrompt.toLowerCase().includes("add expense")) {
 
   const { error } = await supabase.from("expenses_tracker").insert([
     {
-      project_id: Number(activeProjectId),
-      expense_date: new Date().toISOString().split("T")[0],
-      supplier: "AI Entry",
-      category: "AI",
-      description: aiPrompt,
-      status: "Unpaid",
-      net_amount: amount,
-      vat_amount: 0,
-      gross_amount: amount,
-      notes: "Created by AI Assistant",
-    },
+  project_id: Number(activeProjectId),
+  expense_date: new Date().toISOString().split("T")[0],
+  supplier: "AI Entry",
+  category: "General",
+  description: aiPrompt,
+  status: "Unpaid",
+  net_amount: amount,
+  vat_amount: 0,
+  gross_amount: amount,
+}
   ]);
 
   if (error) {

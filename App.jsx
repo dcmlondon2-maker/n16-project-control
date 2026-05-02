@@ -890,9 +890,9 @@ async function saveCashflowOverride(row, field, value) {
       Active Project: <strong>{activeProject?.name || "No project selected"}</strong>
     </p>
 
-    <div className="summary-grid">
+    <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
       <div className="stat-card">
-        <span>Expenses Net</span>
+        <span>Net</span>
         <strong>£{totalExpenseNet.toFixed(2)}</strong>
       </div>
       <div className="stat-card">
@@ -907,43 +907,61 @@ async function saveCashflowOverride(row, field, value) {
 
     <h3>Add Expense</h3>
 
-    <form>
-      <label>Date</label>
-      <input type="date" />
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", maxWidth: "700px" }}>
+      <label>
+        Date
+        <input type="date" style={{ width: "100%" }} />
+      </label>
 
-      <label>Supplier</label>
-      <input type="text" placeholder="Supplier name" />
+      <label>
+        Supplier
+        <input type="text" placeholder="Supplier name" style={{ width: "100%" }} />
+      </label>
 
-      <label>Category</label>
-      <input type="text" placeholder="Materials, tools, fuel, etc" />
+      <label>
+        Category
+        <input type="text" placeholder="Materials, tools, fuel" style={{ width: "100%" }} />
+      </label>
 
-      <label>Description</label>
-      <input type="text" placeholder="What was bought?" />
+      <label>
+        Status
+        <select style={{ width: "100%" }}>
+          <option>Unpaid</option>
+          <option>Paid</option>
+        </select>
+      </label>
 
-      <label>Status</label>
-      <select>
-        <option>Unpaid</option>
-        <option>Paid</option>
-      </select>
+      <label style={{ gridColumn: "1 / 3" }}>
+        Description
+        <input type="text" placeholder="What was bought?" style={{ width: "100%" }} />
+      </label>
 
-      <label>Net Amount</label>
-      <input type="number" placeholder="0.00" />
+      <label>
+        Net Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
 
-      <label>VAT Amount</label>
-      <input type="number" placeholder="0.00" />
+      <label>
+        VAT Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
 
-      <label>Gross Amount</label>
-      <input type="number" placeholder="0.00" />
+      <label>
+        Gross Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
 
-      <button type="button">Save Expense</button>
-    </form>
+      <button type="button" style={{ marginTop: "20px" }}>
+        Save Expense
+      </button>
+    </div>
 
-    <h3>Expense List</h3>
+    <h3 style={{ marginTop: "30px" }}>Expense List</h3>
 
     {projectExpenses.length === 0 ? (
       <p>No expenses found for this project.</p>
     ) : (
-      <table>
+      <table style={{ width: "100%", marginTop: "10px" }}>
         <thead>
           <tr>
             <th>Date</th>

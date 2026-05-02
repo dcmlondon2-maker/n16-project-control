@@ -1109,36 +1109,63 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Projects" && (
-        <Section title="Projects">
-          <div style={formBox}>
-            <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
-            <FormInput label="Project Name" value={projectForm.name} onChange={(v) => setProjectForm({ ...projectForm, name: v })} />
-            <FormInput label="Client Name" value={projectForm.client_name} onChange={(v) => setProjectForm({ ...projectForm, client_name: v })} />
-            <FormInput label="Site Address" value={projectForm.site_address} onChange={(v) => setProjectForm({ ...projectForm, site_address: v })} />
-            <FormInput label="Contract Value" type="number" value={projectForm.contract_value} onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })} />
-            <FormInput label="Status" value={projectForm.status} onChange={(v) => setProjectForm({ ...projectForm, status: v })} />
-            <FormInput label="Start Date" type="date" value={projectForm.start_date} onChange={(v) => setProjectForm({ ...projectForm, start_date: v })} />
-            <FormInput label="Target Completion Date" type="date" value={projectForm.target_completion_date} onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })} />
-            <FormArea label="Notes" value={projectForm.notes} onChange={(v) => setProjectForm({ ...projectForm, notes: v })} />
-            <button style={buttonDark} onClick={saveProject}>{editingProjectId ? "Save Changes" : "Add Project"}</button>
-            {editingProjectId && <button style={button} onClick={cancelProjectEdit}>Cancel Edit</button>}
-          </div>
+  <Section title="Projects">
+    <div style={formBox}>
+      <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
 
-          <Table headers={["Project", "Client", "Address", "Contract Value", "Status", "Actions"]}>
-            {projects.map((p) => (
-              <tr key={p.id}>
-                <td style={td}>{p.name}</td><td style={td}>{p.client_name}</td><td style={td}>{p.site_address}</td><td style={td}>{currency(p.contract_value)}</td><td style={td}>{p.status}</td>
-                <td style={td}>
-                  <button style={smallButton} onClick={() => { setActiveProjectId(String(p.id)); setActiveTab("Dashboard"); }}>Open</button>
-                  <button style={smallButton} onClick={() => editProject(p)}>Edit</button>
-                  <button style={smallDangerButton} onClick={() => deleteProject(p.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </Table>
-</Section>
+      <FormInput label="Project Name" value={projectForm.name} onChange={(v) => setProjectForm({ ...projectForm, name: v })} />
+      <FormInput label="Client Name" value={projectForm.client_name} onChange={(v) => setProjectForm({ ...projectForm, client_name: v })} />
+      <FormInput label="Site Address" value={projectForm.site_address} onChange={(v) => setProjectForm({ ...projectForm, site_address: v })} />
+      <FormInput label="Contract Value" type="number" value={projectForm.contract_value} onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })} />
+      <FormInput label="Status" value={projectForm.status} onChange={(v) => setProjectForm({ ...projectForm, status: v })} />
+      <FormInput label="Start Date" type="date" value={projectForm.start_date} onChange={(v) => setProjectForm({ ...projectForm, start_date: v })} />
+      <FormInput label="Target Completion Date" type="date" value={projectForm.target_completion_date} onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })} />
+      <FormArea label="Notes" value={projectForm.notes} onChange={(v) => setProjectForm({ ...projectForm, notes: v })} />
+
+      <button style={buttonDark} onClick={saveProject}>
+        {editingProjectId ? "Save Changes" : "Add Project"}
+      </button>
+
+      {editingProjectId && (
+        <button style={button} onClick={cancelProjectEdit}>
+          Cancel Edit
+        </button>
+      )}
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Client</th>
+          <th>Address</th>
+          <th>Contract Value</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {projects.map((p) => (
+          <tr key={p.id}>
+            <td>{p.name}</td>
+            <td>{p.client_name}</td>
+            <td>{p.site_address}</td>
+            <td>{currency(p.contract_value)}</td>
+            <td>{p.status}</td>
+            <td>
+              <button onClick={() => { setActiveProjectId(String(p.id)); setActiveTab("Dashboard"); }}>
+                Open
+              </button>
+              <button onClick={() => editProject(p)}>Edit</button>
+              <button onClick={() => deleteProject(p.id)}>Delete</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </Section>
 )}
-
 function Header({ activeProject }) {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>

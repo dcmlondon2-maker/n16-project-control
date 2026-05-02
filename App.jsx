@@ -462,9 +462,11 @@ async function askAI() {
     const reply = data.reply || "";
     setAiReply(reply);
 
-    if (aiPrompt.toLowerCase().includes("add expense")) {
-      const saved = await createExpenseFromAI(aiPrompt);
-
+    if (
+  aiPrompt.toLowerCase().includes("add expense") ||
+  aiPrompt.toLowerCase().includes("to expenses") ||
+  aiPrompt.toLowerCase().includes("expense")
+) {
       if (saved) {
         alert("✅ Expense created");
         await loadData();

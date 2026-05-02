@@ -445,7 +445,9 @@ async function saveProjectRecord(tableName, payload) {
 
   await loadData();
   return true;
-}async function askAI() {
+}
+
+async function askAI() {
   if (!aiPrompt.trim()) return;
 
   setAiLoading(true);

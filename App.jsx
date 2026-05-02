@@ -437,7 +437,7 @@ async function askAI() {
 setAiReply(reply);
 
 // TEMP: detect actions
-if (reply.toLowerCase().includes("add expense")) {
+if (aiPrompt.toLowerCase().includes("add expense")) {
   const amountMatch = reply.match(/(\d+)/);
   const amount = amountMatch ? Number(amountMatch[1]) : 0;
 

@@ -401,7 +401,33 @@ Voice note: ${latest.voice_note || "No voice note recorded"}.
 Summary: Works progressed on site. Labour attendance, weather conditions and site issues have been recorded for project control and future reference.
     `;
     setSiteReport(report.trim());
+  }async function createExpenseFromAI(promptText) {
+  const amountMatch = promptText.match(/£?\s*(\d+(?:\.\d{1,2})?)/);
+  const gross = amountMatch ? Number(amountMatch[1]) : 0;
+
+  const { error } = await supabase
+    .from("expenses_tracker")
+    .insert({
+      project_id: activeProjectId,
+      expense_date: new Date().toISOString().slice(0, 10),
+      supplier: "AI Entry",
+      category: "General",
+      description: promptText,
+      status: "Unpaid",
+      net_amount: gross,
+      vat_amount: 0,
+      gross_amount: gross,
+    });
+
+  if (error) {
+    alert("❌ Save failed: " + error.message);
+    console.error(error);
+    return false;
   }
+
+  return true;
+}
+
 async function askAI() {
   if (!aiPrompt.trim()) return;
 
@@ -436,26 +462,14 @@ async function askAI() {
     const reply = data.reply || "";
 setAiReply(reply);
 
-// TEMP: detect actions
 if (aiPrompt.toLowerCase().includes("add expense")) {
-  const amountMatch = aiPrompt.match(/(\d+)/);
-  const amount = amountMatch ? Number(amountMatch[1]) : 0;
+  const saved = await createExpenseFromAI(aiPrompt);
 
-  const { error } = await supabase
-    .from("expenses_tracker")
-    .insert([
-      {
-        project_id: Number(activeProjectId),
-        expense_date: new Date().toISOString().split("T")[0],
-        supplier: "AI Entry",
-        category: "General",
-        description: aiPrompt,
-        status: "Unpaid",
-        net_amount: amount,
-        vat_amount: 0,
-        gross_amount: amount
-      }
-    ]);
+  if (saved) {
+    alert("✅ Expense created");
+    await loadData();
+  }
+}
 
   if (error) {
   alert("❌ Save failed: " + error.message);

@@ -463,10 +463,12 @@ async function askAI() {
     setAiReply(reply);
 
     if (
-  aiPrompt.toLowerCase().includes("add expense") ||
-  aiPrompt.toLowerCase().includes("to expenses") ||
-  aiPrompt.toLowerCase().includes("expense")
-) {
+      aiPrompt.toLowerCase().includes("add expense") ||
+      aiPrompt.toLowerCase().includes("to expenses") ||
+      aiPrompt.toLowerCase().includes("expense")
+    ) {
+      const saved = await createExpenseFromAI(aiPrompt);
+
       if (saved) {
         alert("✅ Expense created");
         await loadData();
@@ -477,41 +479,48 @@ async function askAI() {
       alert("AI wants to change cashflow");
     }
   } catch (error) {
-  console.error(error);
-  setAiReply("AI failed.");
-} finally {
-  setAiLoading(false);
+    console.error(error);
+    setAiReply("AI failed.");
+  } finally {
+    setAiLoading(false);
+  }
 }
-    if (!siteReport) {
-      alert("Generate a site report first.");
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(siteReport);
-    utterance.lang = "en-GB";
-    utterance.rate = 0.95;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+
+function readAloud() {
+  if (!siteReport) {
+    alert("Generate a site report first.");
+    return;
   }
 
-  function exportSiteReportPdf() {
-    if (!siteReport) {
-      alert("Generate a site report first.");
-      return;
-    }
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      alert("Popup blocked. Please allow popups for this site.");
-      return;
-    }
-    printWindow.document.write(`
-      <html><head><title>N16 Site Report</title><style>
-      body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#111827} h1{margin-bottom:6px}.meta{color:#666;margin-bottom:24px} pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:14px}
-      </style></head><body><h1>N16 Site Report</h1><div class="meta">Generated from Project Control Dashboard</div><pre>${siteReport}</pre></body></html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  const utterance = new SpeechSynthesisUtterance(siteReport);
+  utterance.lang = "en-GB";
+  utterance.rate = 0.95;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function exportSiteReportPdf() {
+  if (!siteReport) {
+    alert("Generate a site report first.");
+    return;
   }
+
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("Popup blocked. Please allow popups for this site.");
+    return;
+  }
+
+  printWindow.document.write(`
+    <html><head><title>N16 Site Report</title><style>
+    body{font-family:Arial,sans-serif;padding:40px;line-height:1.6;color:#111827} h1{margin-bottom:6px}.meta{color:#666;margin-bottom:24px} pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:14px}
+    </style></head><body><h1>N16 Site Report</h1><div class="meta">Generated from Project Control Dashboard</div><pre>${siteReport}</pre></body></html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
 
   const totalBudget = projectBudgets.reduce((s, b) => s + Number(b.budget || 0), 0);
   const totalSpent = projectBudgets.reduce((s, b) => s + Number(b.spent || 0), 0);

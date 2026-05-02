@@ -433,7 +433,17 @@ async function askAI() {
     });
 
     const data = await response.json();
-    setAiReply(data.reply || "No reply.");
+    const reply = data.reply || "";
+setAiReply(reply);
+
+// TEMP: detect actions
+if (reply.toLowerCase().includes("add expense")) {
+  alert("AI wants to add an expense");
+}
+
+if (reply.toLowerCase().includes("set cash in")) {
+  alert("AI wants to change cashflow");
+}
   } catch (error) {
     setAiReply("AI failed.");
   }

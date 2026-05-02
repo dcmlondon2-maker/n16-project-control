@@ -458,10 +458,10 @@ if (aiPrompt.toLowerCase().includes("add expense")) {
     ]);
 
   if (error) {
-    alert("❌ Save failed");
-    console.error(error);
-    return;
-  }
+  alert("❌ Save failed: " + error.message);
+  console.error(error);
+  return;
+}
 
   alert("✅ Expense created");
   loadData();

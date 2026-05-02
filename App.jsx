@@ -893,37 +893,62 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Expenses" && (
-        <Section title="Expenses / Receipts Tracker">
-          <div style={grid3}>
-            <Card title="Expenses Net" value={currency(totalExpenseNet)} />
-            <Card title="VAT" value={currency(totalExpenseVat)} />
-            <Card title="Gross" value={currency(totalExpenseGross)} />
-          </div>
+  <section className="card">
+    <h2>Expenses / Receipts Tracker</h2>
 
-          <div style={formBox}>
-            <h3>Add Expense / Receipt</h3>
-            <ProjectWarning activeProject={activeProject} />
-            <FormInput label="Date" type="date" value={expenseForm.expense_date} onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })} />
-            <FormInput label="Supplier" value={expenseForm.supplier} onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })} />
-            <FormInput label="Category" value={expenseForm.category} onChange={(v) => setExpenseForm({ ...expenseForm, category: v })} />
-            <FormInput label="Description" value={expenseForm.description} onChange={(v) => setExpenseForm({ ...expenseForm, description: v })} />
-            <FormInput label="Status" value={expenseForm.status} onChange={(v) => setExpenseForm({ ...expenseForm, status: v })} />
-            <FormInput label="Net Amount" type="number" value={expenseForm.net_amount} onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })} />
-            <FormInput label="VAT Amount" type="number" value={expenseForm.vat_amount} onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })} />
-            <FormArea label="Notes" value={expenseForm.notes} onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })} />
-            <label style={labelStyle}>Receipt Photo / File<input style={inputStyle} type="file" accept="image/*,.pdf" onChange={(e) => setReceiptFile(e.target.files[0])} /></label>
-            <button style={buttonDark} onClick={saveExpense}>Save Expense</button>
-          </div>
+    <p>
+      Active Project: <strong>{activeProject?.name || "No project selected"}</strong>
+    </p>
 
-          <Table headers={["Date", "Supplier", "Category", "Status", "Net", "VAT", "Gross", "Receipt", "Actions"]}>
-            {projectExpenses.map((e) => (
-              <tr key={e.id}>
-                <td style={td}>{e.expense_date}</td><td style={td}>{e.supplier}</td><td style={td}>{e.category}</td><td style={td}>{e.status}</td><td style={td}>{currency(e.net_amount)}</td><td style={td}>{currency(e.vat_amount)}</td><td style={td}>{currency(e.gross_amount)}</td><td style={td}>{e.receipt_url ? <a href={e.receipt_url} target="_blank" rel="noreferrer">View</a> : "-"}</td><td style={td}><button style={smallDangerButton} onClick={() => deleteExpense(e.id)}>Delete</button></td>
-              </tr>
-            ))}
-          </Table>
-        </Section>
-      )}
+    <div className="summary-grid">
+      <div className="stat-card">
+        <span>Expenses Net</span>
+        <strong>£{totalExpenseNet.toFixed(2)}</strong>
+      </div>
+      <div className="stat-card">
+        <span>VAT</span>
+        <strong>£{totalExpenseVat.toFixed(2)}</strong>
+      </div>
+      <div className="stat-card">
+        <span>Gross</span>
+        <strong>£{totalExpenseGross.toFixed(2)}</strong>
+      </div>
+    </div>
+
+    {projectExpenses.length === 0 ? (
+      <p>No expenses found for this project.</p>
+    ) : (
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Supplier</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Net</th>
+            <th>VAT</th>
+            <th>Gross</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projectExpenses.map((e) => (
+            <tr key={e.id}>
+              <td>{e.expense_date}</td>
+              <td>{e.supplier}</td>
+              <td>{e.category}</td>
+              <td>{e.description}</td>
+              <td>{e.status}</td>
+              <td>£{Number(e.net_amount || 0).toFixed(2)}</td>
+              <td>£{Number(e.vat_amount || 0).toFixed(2)}</td>
+              <td>£{Number(e.gross_amount || 0).toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </section>
+)}
 
       {activeTab === "Snagging" && (
         <Section title="Snagging / Defect Photos">

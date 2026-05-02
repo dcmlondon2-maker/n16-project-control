@@ -475,11 +475,10 @@ async function askAI() {
       alert("AI wants to change cashflow");
     }
   } catch (error) {
-    console.error(error);
-    setAiReply("AI failed.");
-  } finally {
-    setAiLoading(false);
-  }
+  console.error(error);
+  setAiReply("AI failed.");
+} finally {
+  setAiLoading(false);
 }
     if (!siteReport) {
       alert("Generate a site report first.");

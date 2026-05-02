@@ -459,7 +459,7 @@ async function askAI() {
     });
 
     const data = await response.json();
-    const reply = data.reply || "";
+const reply = data.reply || "";
 setAiReply(reply);
 
 if (aiPrompt.toLowerCase().includes("add expense")) {
@@ -476,7 +476,12 @@ if (reply.toLowerCase().includes("set cash in")) {
 }
 
 setAiLoading(false);
-}  function readAloud() {
+
+}  
+
+setAiLoading(false);
+
+function readAloud() {
     if (!siteReport) {
       alert("Generate a site report first.");
       return;

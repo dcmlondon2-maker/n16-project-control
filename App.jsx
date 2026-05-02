@@ -1137,9 +1137,8 @@ async function saveCashflowOverride(row, field, value) {
             ))}
           </Table>
         </Section>
-      )}
-    </div>
-  </div>
+</div>
+</div>
 );
 }
 function Header({ activeProject }) {

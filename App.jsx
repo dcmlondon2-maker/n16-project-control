@@ -774,19 +774,21 @@ async function saveCashflowOverride(row, field, value) {
   <td style={td}>{row.week}</td>
 
   <td style={td}>
-    <input
-  type="number"
-  defaultValue={row.cashIn ?? ""}
-onBlur={(e) => saveCashflowOverride(row, "cashIn", e.target.value)}
+  <input
+    key={`cash-in-${row.week}-${row.cashIn}`}
+    type="number"
+    defaultValue={row.cashIn ?? ""}
+    onBlur={(e) => saveCashflowOverride(row, "cashIn", e.target.value)}
   style={{ width: "100%" }}
 />
   </td>
 
   <td style={td}>
-    <input
-  type="number"
-  defaultValue={row.cashOut ?? ""}
-onBlur={(e) => saveCashflowOverride(row, "cashOut", e.target.value)}
+  <input
+    key={`cash-out-${row.week}-${row.cashOut}`}
+    type="number"
+    defaultValue={row.cashOut ?? ""}
+    onBlur={(e) => saveCashflowOverride(row, "cashOut", e.target.value)}
   style={{ width: "100%" }}
 />
   </td>

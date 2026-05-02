@@ -474,11 +474,8 @@ if (aiPrompt.toLowerCase().includes("add expense")) {
 if (reply.toLowerCase().includes("set cash in")) {
   alert("AI wants to change cashflow");
 }
-  
-    setAiReply("AI failed.");
-  }
 
-  setAiLoading(false);
+setAiLoading(false);
 }  function readAloud() {
     if (!siteReport) {
       alert("Generate a site report first.");

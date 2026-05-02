@@ -1,4 +1,4 @@
-cimport React, ant cant{ useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 

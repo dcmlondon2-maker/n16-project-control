@@ -440,48 +440,47 @@ async function askAI() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-  prompt: aiPrompt,
-  context: {
-    projectName: activeProject?.name || "All Projects",
-    sellValue: contractWithVariations,
-    labour: totalLabour,
-    purchaseOrders: totalPOs,
-    subbies: totalSubbies,
-    expenses: totalExpenseGross,
-    otherCosts: Number(latestProfit.other_cost || 0),
-    invoices: totalInvoiced,
-    paid: totalPaid,
-    outstanding: totalOutstanding,
-    openSnags,
-    highPrioritySnags
-  }
-}),
+        prompt: aiPrompt,
+        context: {
+          projectName: activeProject?.name || "All Projects",
+          sellValue: contractWithVariations,
+          labour: totalLabour,
+          purchaseOrders: totalPOs,
+          subbies: totalSubbies,
+          expenses: totalExpenseGross,
+          otherCosts: Number(latestProfit.other_cost || 0),
+          invoices: totalInvoiced,
+          paid: totalPaid,
+          outstanding: totalOutstanding,
+          openSnags,
+          highPrioritySnags,
+        },
+      }),
     });
 
     const data = await response.json();
-const reply = data.reply || "";
-setAiReply(reply);
+    const reply = data.reply || "";
+    setAiReply(reply);
 
-if (aiPrompt.toLowerCase().includes("add expense")) {
-  const saved = await createExpenseFromAI(aiPrompt);
+    if (aiPrompt.toLowerCase().includes("add expense")) {
+      const saved = await createExpenseFromAI(aiPrompt);
 
-  if (saved) {
-    alert("✅ Expense created");
-    await loadData();
+      if (saved) {
+        alert("✅ Expense created");
+        await loadData();
+      }
+    }
+
+    if (reply.toLowerCase().includes("set cash in")) {
+      alert("AI wants to change cashflow");
+    }
+  } catch (error) {
+    console.error(error);
+    setAiReply("AI failed.");
+  } finally {
+    setAiLoading(false);
   }
 }
-
-if (reply.toLowerCase().includes("set cash in")) {
-  alert("AI wants to change cashflow");
-}
-
-setAiLoading(false);
-
-}  
-
-setAiLoading(false);
-
-function readAloud() {
     if (!siteReport) {
       alert("Generate a site report first.");
       return;

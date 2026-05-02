@@ -1139,9 +1139,9 @@ async function saveCashflowOverride(row, field, value) {
         </Section>
       )}
     </div>
-  );
+  </div>
+);
 }
-
 function Header({ activeProject }) {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+cimport React, ant cant{ useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 
@@ -438,11 +438,33 @@ setAiReply(reply);
 
 // TEMP: detect actions
 if (aiPrompt.toLowerCase().includes("add expense")) {
-  const amountMatch = reply.match(/(\d+)/);
+  const amountMatch = aiPrompt.match(/(\d+)/);
   const amount = amountMatch ? Number(amountMatch[1]) : 0;
 
-  await supabase.from("expenses_tracker").insert([
+  const { error } = await supabase.from("expenses_tracker").insert([
     {
+      project_id: Number(activeProjectId),
+      expense_date: new Date().toISOString().split("T")[0],
+      supplier: "AI Entry",
+      category: "AI",
+      description: aiPrompt,
+      status: "Unpaid",
+      net_amount: amount,
+      vat_amount: 0,
+      gross_amount: amount,
+      notes: "Created by AI Assistant",
+    },
+  ]);
+
+  if (error) {
+    alert("❌ Save failed: " + error.message);
+    console.error(error);
+    return;
+  }
+
+  alert("✅ Expense created");
+  loadData();
+}
       project_id: Number(activeProjectId),
       expense_date: new Date().toISOString().split("T")[0],
       supplier: "AI Entry",

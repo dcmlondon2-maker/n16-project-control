@@ -442,45 +442,31 @@ if (aiPrompt.toLowerCase().includes("add expense")) {
   const amount = amountMatch ? Number(amountMatch[1]) : 0;
 
   const { error } = await supabase
-  .from("expenses_tracker")
-  .insert([
-    {
-      project_id: Number(activeProjectId),
-      expense_date: new Date().toISOString().split("T")[0],
-      supplier: "AI Entry",
-      category: "General",
-      description: aiPrompt,
-      status: "Unpaid",
-      net_amount: 320,
-      vat_amount: 0,
-      gross_amount: 320
-    }
-  ]);
+    .from("expenses_tracker")
+    .insert([
+      {
+        project_id: Number(activeProjectId),
+        expense_date: new Date().toISOString().split("T")[0],
+        supplier: "AI Entry",
+        category: "General",
+        description: aiPrompt,
+        status: "Unpaid",
+        net_amount: amount,
+        vat_amount: 0,
+        gross_amount: amount
+      }
+    ]);
 
-if (error) {
-  alert("❌ Save failed");
-  console.error(error);
-  return;
-}
+  if (error) {
+    alert("❌ Save failed");
+    console.error(error);
+    return;
+  }
 
-alert("✅ Expense created");
-loadData();
-}
-      project_id: Number(activeProjectId),
-      expense_date: new Date().toISOString().split("T")[0],
-      supplier: "AI Entry",
-      description: reply,
-      net_amount: amount,
-      vat_amount: 0,
-      gross_amount: amount,
-      status: "Unpaid",
-    },
-  ]);
-
-  alert("Expense created from AI");
+  alert("✅ Expense created");
   loadData();
 }
-
+  
 if (reply.toLowerCase().includes("set cash in")) {
   alert("AI wants to change cashflow");
 }

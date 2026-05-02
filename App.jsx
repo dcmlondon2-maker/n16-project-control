@@ -1136,8 +1136,7 @@ async function saveCashflowOverride(row, field, value) {
               </tr>
             ))}
           </Table>
-        </Section>
-</div>
+</Section>
 </div>
 );
 }

@@ -471,20 +471,10 @@ if (aiPrompt.toLowerCase().includes("add expense")) {
   }
 }
 
-  if (error) {
-  alert("❌ Save failed: " + error.message);
-  console.error(error);
-  return;
-}
-
-  alert("✅ Expense created");
-  loadData();
-}
-  
 if (reply.toLowerCase().includes("set cash in")) {
   alert("AI wants to change cashflow");
 }
-  } catch (error) {
+  
     setAiReply("AI failed.");
   }
 

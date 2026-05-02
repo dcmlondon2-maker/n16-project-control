@@ -882,16 +882,6 @@ async function saveCashflowOverride(row, field, value) {
         </Section>
       )}
 
-      {activeTab === "Subbies" && (
-        <Section title="Subcontractor Payment Tracker">
-          <div style={grid3}>
-            <Card title="Subbies Due" value={currency(totalSubbies)} />
-            <Card title="Subbies Paid" value={currency(totalSubbiesPaid)} />
-            <Card title="Outstanding" value={currency(totalSubbiesOutstanding)} />
-          </div>
-        </Section>
-      )}
-
       {activeTab === "Expenses" && (
   <section className="card">
     <h2>Expenses / Receipts Tracker</h2>
@@ -914,6 +904,41 @@ async function saveCashflowOverride(row, field, value) {
         <strong>£{totalExpenseGross.toFixed(2)}</strong>
       </div>
     </div>
+
+    <h3>Add Expense</h3>
+
+    <form>
+      <label>Date</label>
+      <input type="date" />
+
+      <label>Supplier</label>
+      <input type="text" placeholder="Supplier name" />
+
+      <label>Category</label>
+      <input type="text" placeholder="Materials, tools, fuel, etc" />
+
+      <label>Description</label>
+      <input type="text" placeholder="What was bought?" />
+
+      <label>Status</label>
+      <select>
+        <option>Unpaid</option>
+        <option>Paid</option>
+      </select>
+
+      <label>Net Amount</label>
+      <input type="number" placeholder="0.00" />
+
+      <label>VAT Amount</label>
+      <input type="number" placeholder="0.00" />
+
+      <label>Gross Amount</label>
+      <input type="number" placeholder="0.00" />
+
+      <button type="button">Save Expense</button>
+    </form>
+
+    <h3>Expense List</h3>
 
     {projectExpenses.length === 0 ? (
       <p>No expenses found for this project.</p>
@@ -949,7 +974,6 @@ async function saveCashflowOverride(row, field, value) {
     )}
   </section>
 )}
-
       {activeTab === "Snagging" && (
         <Section title="Snagging / Defect Photos">
           <div style={grid3}>

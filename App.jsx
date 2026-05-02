@@ -766,8 +766,8 @@ async function saveCashflowOverride(row, field, value) {
   <td style={td}>
     <input
   type="number"
-  value={row.cashIn ?? ""}
-  onChange={(e) => saveCashflowOverride(row, "cashIn", e.target.value)}
+  defaultValue={row.cashIn ?? ""}
+onBlur={(e) => saveCashflowOverride(row, "cashIn", e.target.value)}
   style={{ width: "100%" }}
 />
   </td>
@@ -775,8 +775,8 @@ async function saveCashflowOverride(row, field, value) {
   <td style={td}>
     <input
   type="number"
-  value={row.cashOut ?? ""}
-  onChange={(e) => saveCashflowOverride(row, "cashOut", e.target.value)}
+  defaultValue={row.cashOut ?? ""}
+onBlur={(e) => saveCashflowOverride(row, "cashOut", e.target.value)}
   style={{ width: "100%" }}
 />
   </td>

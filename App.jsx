@@ -64,7 +64,7 @@ export default function App() {
     voice_note: "",
   });
 
-  const [expenses, setExpenses] = useState([]);
+  
 
 const [expenseForm, setExpenseForm] = useState({
   expense_date: today,

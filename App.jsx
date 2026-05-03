@@ -251,43 +251,57 @@ export default function App() {
   }
 
   async function saveExpense() {
-    if (!requireProject()) return;
-    if (!expenseForm.supplier) {
-      alert("Supplier is required.");
-      return;
-    }
+  if (!requireProject()) return;
 
-    let receiptUrl = "";
-    if (receiptFile) {
-      const fileName = `${Date.now()}-${receiptFile.name}`;
-      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, receiptFile);
-      if (uploadError) {
-        alert("Receipt upload failed. Check the Supabase receipts bucket is public.");
-        console.error(uploadError);
-        return;
-      }
-      const { data } = supabase.storage.from("receipts").getPublicUrl(fileName);
-      receiptUrl = data.publicUrl;
-    }
+  if (!expenseForm.supplier) {
+    alert("Supplier is required.");
+    return;
+  }
 
-    const net = Number(expenseForm.net_amount || 0);
-    const vat = Number(expenseForm.vat_amount || 0);
+  const net = Number(expenseForm.net_amount || 0);
+  const vat = Number(expenseForm.vat_amount || 0);
 
-    await supabase.from("expenses_tracker").insert([
-      {
-        project_id: Number(activeProjectId),
-        expense_date: expenseForm.expense_date,
-        supplier: expenseForm.supplier,
-        category: expenseForm.category,
-        description: expenseForm.description,
-        status: expenseForm.status,
-        net_amount: net,
-        vat_amount: vat,
-        gross_amount: net + vat,
-        receipt_url: receiptUrl,
-        notes: expenseForm.notes,
-      },
-    ]);
+  const payload = {
+    project_id: activeProjectId,
+    expense_date: expenseForm.expense_date,
+    supplier: expenseForm.supplier,
+    category: expenseForm.category,
+    description: expenseForm.description,
+    status: expenseForm.status,
+    net_amount: net,
+    vat_amount: vat,
+    gross_amount: net + vat,
+    notes: expenseForm.notes,
+  };
+
+  const { data, error } = await supabase
+    .from("expenses_tracker")
+    .insert(payload)
+    .select();
+
+  if (error) {
+    console.error("Expense save failed:", error);
+    alert("Expense save failed: " + error.message);
+    return;
+  }
+
+  console.log("Expense saved:", data);
+
+  alert("Expense saved.");
+
+  setExpenseForm({
+    expense_date: today,
+    supplier: "",
+    category: "",
+    description: "",
+    status: "Unpaid",
+    net_amount: "",
+    vat_amount: "",
+    notes: "",
+  });
+
+  await loadData();
+}
 
     setExpenseForm({ expense_date: today, supplier: "", category: "", description: "", status: "Unpaid", net_amount: "", vat_amount: "", notes: "" });
     setReceiptFile(null);

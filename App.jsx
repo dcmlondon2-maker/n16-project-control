@@ -422,8 +422,6 @@ Summary: Works progressed on site. Labour attendance, weather conditions and sit
     gross_amount: gross,
   });
 }
-  return true;
-}
 async function saveProjectRecord(tableName, payload) {
   if (!activeProjectId) {
     alert("Select a project first.");
@@ -1165,8 +1163,7 @@ async function saveCashflowOverride(row, field, value) {
       </tbody>
     </table>
   </Section>
-);
-}
+)}
 
 function Header({ activeProject }) {
   return (

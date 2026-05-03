@@ -963,37 +963,52 @@ async function saveCashflowOverride(row, field, value) {
       </button>
 
       <FormInput
-        label="Net Amount"
-        type="number"
-        value={expenseForm.net_amount}
-        onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
-      />
+  label="Net Amount"
+  type="number"
+  value={expenseForm.net_amount}
+  onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
+/>
+<button style={button} onClick={() => startVoice("expense", "net_amount")}>
+  🎤 Net
+</button>
 
-      <FormInput
-        label="VAT Amount"
-        type="number"
-        value={expenseForm.vat_amount}
-        onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
-      />
+<FormInput
+  label="VAT Amount"
+  type="number"
+  value={expenseForm.vat_amount}
+  onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
+/>
+<button style={button} onClick={() => startVoice("expense", "vat_amount")}>
+  🎤 VAT
+</button>
 
-      <FormInput
-        label="Status"
-        value={expenseForm.status}
-        onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
-        placeholder="Paid or Unpaid"
-      />
+<FormInput
+  label="Status"
+  value={expenseForm.status}
+  onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
+  placeholder="Paid or Unpaid"
+/>
+<button style={button} onClick={() => startVoice("expense", "status")}>
+  🎤 Status
+</button>
 
-      <FormArea
-        label="Notes"
-        value={expenseForm.notes}
-        onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
-      />
+<FormArea
+  label="Notes"
+  value={expenseForm.notes}
+  onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
+/>
+<button style={button} onClick={() => startVoice("expense", "notes")}>
+  🎤 Notes
+</button>
 
-      <input
-        type="file"
-        accept="image/*,.pdf"
-        onChange={(e) => setReceiptFile(e.target.files[0])}
-      />
+      <label>
+  Upload Receipt / Invoice Photo
+  <input
+    type="file"
+    accept="image/*,.pdf"
+    onChange={(e) => setReceiptFile(e.target.files[0])}
+  />
+</label>
 
       <button style={buttonDark} onClick={saveExpense}>
         Save Expense

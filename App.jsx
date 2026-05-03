@@ -966,7 +966,18 @@ async function saveCashflowOverride(row, field, value) {
   label="Net Amount"
   type="number"
   value={expenseForm.net_amount}
-  onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
+  onChange={(v) => {
+    const net = Number(v || 0);
+    const vat = net * 0.2;
+    const gross = net + vat;
+
+    setExpenseForm({
+      ...expenseForm,
+      net_amount: net,
+      vat_amount: vat,
+      gross_amount: gross,
+    });
+  }}
 />
 <button style={button} onClick={() => startVoice("expense", "net_amount")}>
   🎤 Net

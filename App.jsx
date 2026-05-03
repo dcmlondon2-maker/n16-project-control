@@ -1302,6 +1302,7 @@ async function saveCashflowOverride(row, field, value) {
 )}
 </div>
 );
+}
 
 function Header({ activeProject }) {
   return (

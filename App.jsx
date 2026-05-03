@@ -251,32 +251,22 @@ export default function App() {
   }
 
   async function saveExpense() {
-    if (!requireProject()) return;
-    if (!expenseForm.supplier) {
-      alert("Supplier is required.");
-      return;
-    }
+  if (!requireProject()) return;
 
-    let receiptUrl = "";
-    if (receiptFile) {
-      const fileName = `${Date.now()}-${receiptFile.name}`;
-      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, receiptFile);
-      if (uploadError) {
-        alert("Receipt upload failed. Check the Supabase receipts bucket is public.");
-        console.error(uploadError);
-        return;
-      }
-      const { data } = supabase.storage.from("receipts").getPublicUrl(fileName);
-      receiptUrl = data.publicUrl;
-    }
+  if (!expenseForm.supplier) {
+    alert("Supplier is required.");
+    return;
+  }
 
-    const net = Number(expenseForm.net_amount || 0);
-    const vat = Number(expenseForm.vat_amount || 0);
+  const net = Number(expenseForm.net_amount || 0);
+  const vat = Number(expenseForm.vat_amount || 0);
 
-    await supabase.from("expenses_tracker").insert([
+  const { data, error } = await supabase
+    .from("expenses_tracker")
+    .insert([
       {
         project_id: Number(activeProjectId),
-        expense_date: expenseForm.expense_date,
+        expense_date: expenseForm.expense_date || today,
         supplier: expenseForm.supplier,
         category: expenseForm.category,
         description: expenseForm.description,
@@ -284,15 +274,33 @@ export default function App() {
         net_amount: net,
         vat_amount: vat,
         gross_amount: net + vat,
-        receipt_url: receiptUrl,
         notes: expenseForm.notes,
       },
-    ]);
+    ])
+    .select();
 
-    setExpenseForm({ expense_date: today, supplier: "", category: "", description: "", status: "Unpaid", net_amount: "", vat_amount: "", notes: "" });
-    setReceiptFile(null);
-    loadData();
+  if (error) {
+    console.error(error);
+    alert("Expense NOT saved: " + error.message);
+    return;
   }
+
+  alert("Expense saved.");
+  console.log("Saved expense:", data);
+
+  setExpenseForm({
+    expense_date: today,
+    supplier: "",
+    category: "",
+    description: "",
+    status: "Unpaid",
+    net_amount: "",
+    vat_amount: "",
+    notes: "",
+  });
+
+  await loadData();
+}
 
   async function deleteExpense(id) {
     const confirmDelete = window.confirm("Delete this expense?");

@@ -378,7 +378,7 @@ export default function App() {
       if (target === "diary") setDiaryForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
       if (target === "note") setNoteForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
       if (target === "snag") setSnagForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
-    };
+    if (target === "expense") setExpenseForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));    };
   }
 
   function generateSiteReport() {
@@ -910,85 +910,112 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Expenses" && (
-  <section className="card">
-    <h2>Expenses / Receipts Tracker</h2>
-
+  <Section title="Expenses / Receipts">
     <p>
-      Active Project: <strong>{activeProject?.name || "No project selected"}</strong>
+      Active Job: <strong>{activeProject?.name || "No job selected"}</strong>
     </p>
 
-    <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
-      <div className="stat-card">
-        <span>Net</span>
-        <strong>£{totalExpenseNet.toFixed(2)}</strong>
-      </div>
-      <div className="stat-card">
-        <span>VAT</span>
-        <strong>£{totalExpenseVat.toFixed(2)}</strong>
-      </div>
-      <div className="stat-card">
-        <span>Gross</span>
-        <strong>£{totalExpenseGross.toFixed(2)}</strong>
-      </div>
+    <div style={grid4}>
+      <Card title="Net" value={currency(totalExpenseNet)} />
+      <Card title="VAT" value={currency(totalExpenseVat)} />
+      <Card title="Gross" value={currency(totalExpenseGross)} />
+      <Card title="Entries" value={projectExpenses.length} />
     </div>
 
-    <h3>Add Expense</h3>
+    <div style={formBox}>
+      <h3>Add Expense</h3>
 
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", maxWidth: "700px" }}>
-      <label>
-        Date
-        <input type="date" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="Date"
+        type="date"
+        value={expenseForm.expense_date}
+        onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })}
+      />
 
-      <label>
-        Supplier
-        <input type="text" placeholder="Supplier name" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="Supplier"
+        value={expenseForm.supplier}
+        onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })}
+        placeholder="Screwfix, Toolstation, Travis Perkins"
+      />
+      <button style={button} onClick={() => startVoice("expense", "supplier")}>
+        🎤 Supplier
+      </button>
 
-      <label>
-        Category
-        <input type="text" placeholder="Materials, tools, fuel" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="Category"
+        value={expenseForm.category}
+        onChange={(v) => setExpenseForm({ ...expenseForm, category: v })}
+        placeholder="Materials, tools, fuel, parking"
+      />
+      <button style={button} onClick={() => startVoice("expense", "category")}>
+        🎤 Category
+      </button>
 
-      <label>
-        Status
-        <select style={{ width: "100%" }}>
-          <option>Unpaid</option>
-          <option>Paid</option>
-        </select>
-      </label>
+      <FormArea
+        label="Description"
+        value={expenseForm.description}
+        onChange={(v) => setExpenseForm({ ...expenseForm, description: v })}
+        placeholder="What was bought?"
+      />
+      <button style={button} onClick={() => startVoice("expense", "description")}>
+        🎤 Description
+      </button>
 
-      <label style={{ gridColumn: "1 / 3" }}>
-        Description
-        <input type="text" placeholder="What was bought?" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="Net Amount"
+        type="number"
+        value={expenseForm.net_amount}
+        onChange={(v) => setExpenseForm({ ...expenseForm, net_amount: v })}
+      />
 
-      <label>
-        Net Amount
-        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="VAT Amount"
+        type="number"
+        value={expenseForm.vat_amount}
+        onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
+      />
 
-      <label>
-        VAT Amount
-        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
-      </label>
+      <FormInput
+        label="Status"
+        value={expenseForm.status}
+        onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
+        placeholder="Paid or Unpaid"
+      />
 
-      <label>
-        Gross Amount
-        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
-      </label>
+      <FormArea
+        label="Notes"
+        value={expenseForm.notes}
+        onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
+      />
 
-      <button type="button" style={{ marginTop: "20px" }}>
+      <input
+        type="file"
+        accept="image/*,.pdf"
+        onChange={(e) => setReceiptFile(e.target.files[0])}
+      />
+
+      <button style={buttonDark} onClick={saveExpense}>
         Save Expense
+      </button>
+
+      <button
+        style={button}
+        onClick={() => {
+          setAiPrompt("Add an expense for this job. Supplier: " + expenseForm.supplier + ". Description: " + expenseForm.description);
+          setActiveTab("AI Assistant");
+        }}
+      >
+        Ask AI About This Expense
       </button>
     </div>
 
-    <h3 style={{ marginTop: "30px" }}>Expense List</h3>
+    <h3>Expense List</h3>
 
     {projectExpenses.length === 0 ? (
-      <p>No expenses found for this project.</p>
+      <p>No expenses found for this job.</p>
     ) : (
-      <table style={{ width: "100%", marginTop: "10px" }}>
+      <table style={{ width: "100%", marginTop: 10 }}>
         <thead>
           <tr>
             <th>Date</th>
@@ -999,8 +1026,10 @@ async function saveCashflowOverride(row, field, value) {
             <th>Net</th>
             <th>VAT</th>
             <th>Gross</th>
+            <th>Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {projectExpenses.map((e) => (
             <tr key={e.id}>
@@ -1009,15 +1038,18 @@ async function saveCashflowOverride(row, field, value) {
               <td>{e.category}</td>
               <td>{e.description}</td>
               <td>{e.status}</td>
-              <td>£{Number(e.net_amount || 0).toFixed(2)}</td>
-              <td>£{Number(e.vat_amount || 0).toFixed(2)}</td>
-              <td>£{Number(e.gross_amount || 0).toFixed(2)}</td>
+              <td>{currency(e.net_amount)}</td>
+              <td>{currency(e.vat_amount)}</td>
+              <td>{currency(e.gross_amount)}</td>
+              <td>
+                <button onClick={() => deleteExpense(e.id)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     )}
-  </section>
+  </Section>
 )}
       {activeTab === "Snagging" && (
         <Section title="Snagging / Defect Photos">

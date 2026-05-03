@@ -280,13 +280,15 @@ export default function App() {
     .select();
 
   if (error) {
-    console.error(error);
-    alert("Expense NOT saved: " + error.message);
-    return;
-  }
+  console.error(error);
+  alert("Expense NOT saved: " + error.message);
+  return;
+}
 
-  alert("Expense saved.");
-  console.log("Saved expense:", data);
+setExpenses((prev) => [...data, ...prev]);
+
+alert("Expense saved.");
+console.log("Saved expense:", data);
 
   setExpenseForm({
     expense_date: today,

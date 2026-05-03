@@ -287,7 +287,10 @@ const [expenseForm, setExpenseForm] = useState({
   return;
 }
 
-setExpenses((prev) => [...data, ...prev]);
+setExpenses((prev) => [
+  ...data.filter((x) => Number(x.project_id) === Number(activeProjectId)),
+  ...prev,
+]);
 
 alert("Expense saved.");
 console.log("Saved expense:", data);

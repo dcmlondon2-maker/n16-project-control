@@ -251,61 +251,50 @@ export default function App() {
   }
 
   async function saveExpense() {
-  if (!requireProject()) return;
+    if (!requireProject()) return;
+    if (!expenseForm.supplier) {
+      alert("Supplier is required.");
+      return;
+    }
 
-  if (!expenseForm.supplier) {
-    alert("Supplier is required.");
-    return;
+    let receiptUrl = "";
+    if (receiptFile) {
+      const fileName = `${Date.now()}-${receiptFile.name}`;
+      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, receiptFile);
+      if (uploadError) {
+        alert("Receipt upload failed. Check the Supabase receipts bucket is public.");
+        console.error(uploadError);
+        return;
+      }
+      const { data } = supabase.storage.from("receipts").getPublicUrl(fileName);
+      receiptUrl = data.publicUrl;
+    }
+
+    const net = Number(expenseForm.net_amount || 0);
+    const vat = Number(expenseForm.vat_amount || 0);
+
+    await supabase.from("expenses_tracker").insert([
+      {
+        project_id: Number(activeProjectId),
+        expense_date: expenseForm.expense_date,
+        supplier: expenseForm.supplier,
+        category: expenseForm.category,
+        description: expenseForm.description,
+        status: expenseForm.status,
+        net_amount: net,
+        vat_amount: vat,
+        gross_amount: net + vat,
+        receipt_url: receiptUrl,
+        notes: expenseForm.notes,
+      },
+    ]);
+
+    setExpenseForm({ expense_date: today, supplier: "", category: "", description: "", status: "Unpaid", net_amount: "", vat_amount: "", notes: "" });
+    setReceiptFile(null);
+    loadData();
   }
 
-  const net = Number(expenseForm.net_amount || 0);
-  const vat = Number(expenseForm.vat_amount || 0);
-
-  const payload = {
-    project_id: activeProjectId,
-    expense_date: expenseForm.expense_date,
-    supplier: expenseForm.supplier,
-    category: expenseForm.category,
-    description: expenseForm.description,
-    status: expenseForm.status,
-    net_amount: net,
-    vat_amount: vat,
-    gross_amount: net + vat,
-    notes: expenseForm.notes,
-  };
-
-  const { data, error } = await supabase
-    .from("expenses_tracker")
-    .insert(payload)
-    .select();
-
-  if (error) {
-    console.error("Expense save failed:", error);
-    alert("Expense save failed: " + error.message);
-    return;
-  }
-
-  console.log("Expense saved:", data);
-
-  alert("Expense saved.");
-
-  setExpenseForm({
-    expense_date: today,
-    supplier: "",
-    category: "",
-    description: "",
-    status: "Unpaid",
-    net_amount: "",
-    vat_amount: "",
-    notes: "",
-  });
-
-  await loadData();
-}
-
-    
-
- async function deleteExpense(id) {
+  async function deleteExpense(id) {
     const confirmDelete = window.confirm("Delete this expense?");
     if (!confirmDelete) return;
     await supabase.from("expenses_tracker").delete().eq("id", id);
@@ -389,7 +378,7 @@ export default function App() {
       if (target === "diary") setDiaryForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
       if (target === "note") setNoteForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
       if (target === "snag") setSnagForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));
-    if (target === "expense") setExpenseForm((prev) => ({ ...prev, [field]: prev[field] ? prev[field] + " " + text : text }));    };
+    };
   }
 
   function generateSiteReport() {
@@ -412,48 +401,30 @@ Voice note: ${latest.voice_note || "No voice note recorded"}.
 Summary: Works progressed on site. Labour attendance, weather conditions and site issues have been recorded for project control and future reference.
     `;
     setSiteReport(report.trim());
-  }
-  async function createExpenseFromAI(promptText) {
+  }async function createExpenseFromAI(promptText) {
   const amountMatch = promptText.match(/£?\s*(\d+(?:\.\d{1,2})?)/);
   const gross = amountMatch ? Number(amountMatch[1]) : 0;
 
-  if (!gross) {
-    alert("No valid amount found.");
-    return false;
-  }
-
-  return await saveProjectRecord("expenses_tracker", {
-    expense_date: new Date().toISOString().slice(0, 10),
-    supplier: "AI Entry",
-    category: "General",
-    description: promptText,
-    status: "Unpaid",
-    net_amount: gross,
-    vat_amount: 0,
-    gross_amount: gross,
-  });
-}
-
-async function saveProjectRecord(tableName, payload) {
-  if (!activeProjectId) {
-    alert("Select a project first.");
-    return false;
-  }
-
   const { error } = await supabase
-    .from(tableName)
+    .from("expenses_tracker")
     .insert({
-      ...payload,
       project_id: activeProjectId,
+      expense_date: new Date().toISOString().slice(0, 10),
+      supplier: "AI Entry",
+      category: "General",
+      description: promptText,
+      status: "Unpaid",
+      net_amount: gross,
+      vat_amount: 0,
+      gross_amount: gross,
     });
 
   if (error) {
+    alert("❌ Save failed: " + error.message);
     console.error(error);
-    alert("Save failed: " + error.message);
     return false;
   }
 
-  await loadData();
   return true;
 }
 
@@ -921,138 +892,85 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Expenses" && (
-  <Section title="Expenses / Receipts">
+  <section className="card">
+    <h2>Expenses / Receipts Tracker</h2>
+
     <p>
-      Active Job: <strong>{activeProject?.name || "No job selected"}</strong>
+      Active Project: <strong>{activeProject?.name || "No project selected"}</strong>
     </p>
 
-    <div style={grid4}>
-      <Card title="Net" value={currency(totalExpenseNet)} />
-      <Card title="VAT" value={currency(totalExpenseVat)} />
-      <Card title="Gross" value={currency(totalExpenseGross)} />
-      <Card title="Entries" value={projectExpenses.length} />
+    <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
+      <div className="stat-card">
+        <span>Net</span>
+        <strong>£{totalExpenseNet.toFixed(2)}</strong>
+      </div>
+      <div className="stat-card">
+        <span>VAT</span>
+        <strong>£{totalExpenseVat.toFixed(2)}</strong>
+      </div>
+      <div className="stat-card">
+        <span>Gross</span>
+        <strong>£{totalExpenseGross.toFixed(2)}</strong>
+      </div>
     </div>
 
-    <div style={formBox}>
-      <h3>Add Expense</h3>
+    <h3>Add Expense</h3>
 
-      <FormInput
-        label="Date"
-        type="date"
-        value={expenseForm.expense_date}
-        onChange={(v) => setExpenseForm({ ...expenseForm, expense_date: v })}
-      />
-
-      <FormInput
-        label="Supplier"
-        value={expenseForm.supplier}
-        onChange={(v) => setExpenseForm({ ...expenseForm, supplier: v })}
-        placeholder="Screwfix, Toolstation, Travis Perkins"
-      />
-      <button style={button} onClick={() => startVoice("expense", "supplier")}>
-        🎤 Supplier
-      </button>
-
-      <FormInput
-        label="Category"
-        value={expenseForm.category}
-        onChange={(v) => setExpenseForm({ ...expenseForm, category: v })}
-        placeholder="Materials, tools, fuel, parking"
-      />
-      <button style={button} onClick={() => startVoice("expense", "category")}>
-        🎤 Category
-      </button>
-
-      <FormArea
-        label="Description"
-        value={expenseForm.description}
-        onChange={(v) => setExpenseForm({ ...expenseForm, description: v })}
-        placeholder="What was bought?"
-      />
-      <button style={button} onClick={() => startVoice("expense", "description")}>
-        🎤 Description
-      </button>
-
-      <FormInput
-  label="Net Amount"
-  type="number"
-  value={expenseForm.net_amount}
-  onChange={(v) => {
-    const net = Number(v || 0);
-    const vat = net * 0.2;
-    const gross = net + vat;
-
-    setExpenseForm({
-      ...expenseForm,
-      net_amount: net,
-      vat_amount: vat,
-      gross_amount: gross,
-    });
-  }}
-/>
-<button style={button} onClick={() => startVoice("expense", "net_amount")}>
-  🎤 Net
-</button>
-
-<FormInput
-  label="VAT Amount"
-  type="number"
-  value={expenseForm.vat_amount}
-  onChange={(v) => setExpenseForm({ ...expenseForm, vat_amount: v })}
-/>
-<button style={button} onClick={() => startVoice("expense", "vat_amount")}>
-  🎤 VAT
-</button>
-
-<FormInput
-  label="Status"
-  value={expenseForm.status}
-  onChange={(v) => setExpenseForm({ ...expenseForm, status: v })}
-  placeholder="Paid or Unpaid"
-/>
-<button style={button} onClick={() => startVoice("expense", "status")}>
-  🎤 Status
-</button>
-
-<FormArea
-  label="Notes"
-  value={expenseForm.notes}
-  onChange={(v) => setExpenseForm({ ...expenseForm, notes: v })}
-/>
-<button style={button} onClick={() => startVoice("expense", "notes")}>
-  🎤 Notes
-</button>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", maxWidth: "700px" }}>
+      <label>
+        Date
+        <input type="date" style={{ width: "100%" }} />
+      </label>
 
       <label>
-  Upload Receipt / Invoice Photo
-  <input
-    type="file"
-    accept="image/*,.pdf"
-    onChange={(e) => setReceiptFile(e.target.files[0])}
-  />
-</label>
+        Supplier
+        <input type="text" placeholder="Supplier name" style={{ width: "100%" }} />
+      </label>
 
-      <button style={buttonDark} onClick={saveExpense}>
+      <label>
+        Category
+        <input type="text" placeholder="Materials, tools, fuel" style={{ width: "100%" }} />
+      </label>
+
+      <label>
+        Status
+        <select style={{ width: "100%" }}>
+          <option>Unpaid</option>
+          <option>Paid</option>
+        </select>
+      </label>
+
+      <label style={{ gridColumn: "1 / 3" }}>
+        Description
+        <input type="text" placeholder="What was bought?" style={{ width: "100%" }} />
+      </label>
+
+      <label>
+        Net Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
+
+      <label>
+        VAT Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
+
+      <label>
+        Gross Amount
+        <input type="number" placeholder="0.00" style={{ width: "100%" }} />
+      </label>
+
+      <button type="button" style={{ marginTop: "20px" }}>
         Save Expense
-      </button>
-
-      <button
-        style={button}
-        onClick={() => {
-          setAiPrompt("Add an expense for this job. Supplier: " + expenseForm.supplier + ". Description: " + expenseForm.description);
-          setActiveTab("AI Assistant");
-        }}
-      >
-        Ask AI About This Expense
       </button>
     </div>
 
-    <h3>Expense List</h3>
+    <h3 style={{ marginTop: "30px" }}>Expense List</h3>
 
     {projectExpenses.length === 0 ? (
-      <p>No expenses found for this job.</p>
+      <p>No expenses found for this project.</p>
     ) : (
-      <table style={{ width: "100%", marginTop: 10 }}>
+      <table style={{ width: "100%", marginTop: "10px" }}>
         <thead>
           <tr>
             <th>Date</th>
@@ -1063,10 +981,8 @@ async function saveCashflowOverride(row, field, value) {
             <th>Net</th>
             <th>VAT</th>
             <th>Gross</th>
-            <th>Actions</th>
           </tr>
         </thead>
-
         <tbody>
           {projectExpenses.map((e) => (
             <tr key={e.id}>
@@ -1075,18 +991,15 @@ async function saveCashflowOverride(row, field, value) {
               <td>{e.category}</td>
               <td>{e.description}</td>
               <td>{e.status}</td>
-              <td>{currency(e.net_amount)}</td>
-              <td>{currency(e.vat_amount)}</td>
-              <td>{currency(e.gross_amount)}</td>
-              <td>
-                <button onClick={() => deleteExpense(e.id)}>Delete</button>
-              </td>
+              <td>£{Number(e.net_amount || 0).toFixed(2)}</td>
+              <td>£{Number(e.vat_amount || 0).toFixed(2)}</td>
+              <td>£{Number(e.gross_amount || 0).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
       </table>
     )}
-  </Section>
+  </section>
 )}
       {activeTab === "Snagging" && (
         <Section title="Snagging / Defect Photos">
@@ -1177,131 +1090,37 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Projects" && (
-  <Section title="Projects / Jobs">
-    <div style={formBox}>
-      <h3>{editingProjectId ? "Edit Job" : "Add New Job"}</h3>
+        <Section title="Projects">
+          <div style={formBox}>
+            <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
+            <FormInput label="Project Name" value={projectForm.name} onChange={(v) => setProjectForm({ ...projectForm, name: v })} />
+            <FormInput label="Client Name" value={projectForm.client_name} onChange={(v) => setProjectForm({ ...projectForm, client_name: v })} />
+            <FormInput label="Site Address" value={projectForm.site_address} onChange={(v) => setProjectForm({ ...projectForm, site_address: v })} />
+            <FormInput label="Contract Value" type="number" value={projectForm.contract_value} onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })} />
+            <FormInput label="Status" value={projectForm.status} onChange={(v) => setProjectForm({ ...projectForm, status: v })} />
+            <FormInput label="Start Date" type="date" value={projectForm.start_date} onChange={(v) => setProjectForm({ ...projectForm, start_date: v })} />
+            <FormInput label="Target Completion Date" type="date" value={projectForm.target_completion_date} onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })} />
+            <FormArea label="Notes" value={projectForm.notes} onChange={(v) => setProjectForm({ ...projectForm, notes: v })} />
+            <button style={buttonDark} onClick={saveProject}>{editingProjectId ? "Save Changes" : "Add Project"}</button>
+            {editingProjectId && <button style={button} onClick={cancelProjectEdit}>Cancel Edit</button>}
+          </div>
 
-      <FormInput
-        label="Job / Project Name"
-        value={projectForm.name}
-        onChange={(v) => setProjectForm({ ...projectForm, name: v })}
-      />
-
-      <FormInput
-        label="Client Name"
-        value={projectForm.client_name}
-        onChange={(v) => setProjectForm({ ...projectForm, client_name: v })}
-      />
-
-      <FormInput
-        label="Site Address"
-        value={projectForm.site_address}
-        onChange={(v) => setProjectForm({ ...projectForm, site_address: v })}
-      />
-
-      <FormInput
-        label="Job Type"
-        value={projectForm.job_type || ""}
-        onChange={(v) => setProjectForm({ ...projectForm, job_type: v })}
-        placeholder="Boiler, plumbing, electrical, refurb, maintenance"
-      />
-
-      <FormInput
-        label="Estimated / Contract Value"
-        type="number"
-        value={projectForm.contract_value}
-        onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })}
-      />
-
-      <FormInput
-        label="Status"
-        value={projectForm.status}
-        onChange={(v) => setProjectForm({ ...projectForm, status: v })}
-        placeholder="Enquiry, Quoted, Accepted, Live, Completed"
-      />
-
-      <FormInput
-        label="Start Date"
-        type="date"
-        value={projectForm.start_date}
-        onChange={(v) => setProjectForm({ ...projectForm, start_date: v })}
-      />
-
-      <FormInput
-        label="Target Completion Date"
-        type="date"
-        value={projectForm.target_completion_date}
-        onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })}
-      />
-
-      <FormArea
-        label="Job Notes / Scope"
-        value={projectForm.notes}
-        onChange={(v) => setProjectForm({ ...projectForm, notes: v })}
-      />
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <button style={buttonDark} onClick={saveProject}>
-          {editingProjectId ? "Save Job Changes" : "Create Job"}
-        </button>
-
-        <button
-          style={button}
-          onClick={() => {
-            setAiPrompt(
-              `Help me set up a job for ${projectForm.name || "this client"}. Job type: ${projectForm.job_type || ""}. Notes: ${projectForm.notes || ""}`
-            );
-            setActiveTab("AI Assistant");
-          }}
-        >
-          Ask AI to Help Set Up
-        </button>
-
-        {editingProjectId && (
-          <button style={button} onClick={cancelProjectEdit}>
-            Cancel Edit
-          </button>
-        )}
-      </div>
+          <Table headers={["Project", "Client", "Address", "Contract Value", "Status", "Actions"]}>
+            {projects.map((p) => (
+              <tr key={p.id}>
+                <td style={td}>{p.name}</td><td style={td}>{p.client_name}</td><td style={td}>{p.site_address}</td><td style={td}>{currency(p.contract_value)}</td><td style={td}>{p.status}</td>
+                <td style={td}>
+                  <button style={smallButton} onClick={() => { setActiveProjectId(String(p.id)); setActiveTab("Dashboard"); }}>Open</button>
+                  <button style={smallButton} onClick={() => editProject(p)}>Edit</button>
+                  <button style={smallDangerButton} onClick={() => deleteProject(p.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        </Section>
+      )}
     </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Job</th>
-          <th>Client</th>
-          <th>Address</th>
-          <th>Type</th>
-          <th>Value</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {projects.map((p) => (
-          <tr key={p.id}>
-            <td>{p.name}</td>
-            <td>{p.client_name}</td>
-            <td>{p.site_address}</td>
-            <td>{p.job_type || "-"}</td>
-            <td>{currency(p.contract_value)}</td>
-            <td>{p.status}</td>
-            <td>
-              <button onClick={() => { setActiveProjectId(String(p.id)); setActiveTab("Dashboard"); }}>
-                Open Job
-              </button>
-              <button onClick={() => editProject(p)}>Edit</button>
-              <button onClick={() => deleteProject(p.id)}>Delete</button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </Section>
-)}
-</div>
-);
+  );
 }
 
 function Header({ activeProject }) {
@@ -1398,4 +1217,3 @@ const warningBox = {
   border: "1px solid #fed7aa",
   borderRadius: 8
 };
-}

@@ -303,12 +303,9 @@ export default function App() {
   await loadData();
 }
 
-    setExpenseForm({ expense_date: today, supplier: "", category: "", description: "", status: "Unpaid", net_amount: "", vat_amount: "", notes: "" });
-    setReceiptFile(null);
-    loadData();
-  }
+    
 
-  async function deleteExpense(id) {
+ async function deleteExpense(id) {
     const confirmDelete = window.confirm("Delete this expense?");
     if (!confirmDelete) return;
     await supabase.from("expenses_tracker").delete().eq("id", id);

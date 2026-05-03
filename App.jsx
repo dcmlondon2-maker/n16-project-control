@@ -1397,3 +1397,5 @@ const warningBox = {
   border: "1px solid #fed7aa",
   borderRadius: 8
 };
+}
+export default App;

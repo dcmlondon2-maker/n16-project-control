@@ -1398,4 +1398,3 @@ const warningBox = {
   borderRadius: 8
 };
 }
-export default App;

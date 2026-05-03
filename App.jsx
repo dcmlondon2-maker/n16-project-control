@@ -307,6 +307,7 @@ console.log("Saved expense:", data);
   });
 
   await loadData();
+alert("Expense saved.");
 }
 
   async function deleteExpense(id) {

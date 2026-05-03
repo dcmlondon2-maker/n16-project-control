@@ -1163,8 +1163,11 @@ async function saveCashflowOverride(row, field, value) {
         ))}
             </tbody>
     </table>
-  </Section>
-)}
+</Section>
+);
+}
+
+function Header({ activeProject }) {
 
 function Header({ activeProject }) {
   return (

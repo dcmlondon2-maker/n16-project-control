@@ -1168,8 +1168,6 @@ async function saveCashflowOverride(row, field, value) {
 }
 
 function Header({ activeProject }) {
-
-function Header({ activeProject }) {
   return (
     <div style={{ background: "#111827", color: "white", padding: 24, borderRadius: 16 }}>
       <h1 style={{ margin: 0 }}>N16 Project Control Dashboard</h1>

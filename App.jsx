@@ -64,16 +64,18 @@ export default function App() {
     voice_note: "",
   });
 
-  const [expenseForm, setExpenseForm] = useState({
-    expense_date: today,
-    supplier: "",
-    category: "",
-    description: "",
-    status: "Unpaid",
-    net_amount: "",
-    vat_amount: "",
-    notes: "",
-  });
+  const [expenses, setExpenses] = useState([]);
+
+const [expenseForm, setExpenseForm] = useState({
+  expense_date: today,
+  supplier: "",
+  category: "",
+  description: "",
+  status: "Unpaid",
+  net_amount: "",
+  vat_amount: "",
+  notes: "",
+});
 
   const [snagForm, setSnagForm] = useState({
     snag_date: today,

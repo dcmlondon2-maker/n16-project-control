@@ -1108,37 +1108,102 @@ async function saveCashflowOverride(row, field, value) {
       )}
 
       {activeTab === "Projects" && (
-  <Section title="Projects">
+  <Section title="Projects / Jobs">
     <div style={formBox}>
-      <h3>{editingProjectId ? "Edit Project" : "Add Project"}</h3>
+      <h3>{editingProjectId ? "Edit Job" : "Add New Job"}</h3>
 
-      <FormInput label="Project Name" value={projectForm.name} onChange={(v) => setProjectForm({ ...projectForm, name: v })} />
-      <FormInput label="Client Name" value={projectForm.client_name} onChange={(v) => setProjectForm({ ...projectForm, client_name: v })} />
-      <FormInput label="Site Address" value={projectForm.site_address} onChange={(v) => setProjectForm({ ...projectForm, site_address: v })} />
-      <FormInput label="Contract Value" type="number" value={projectForm.contract_value} onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })} />
-      <FormInput label="Status" value={projectForm.status} onChange={(v) => setProjectForm({ ...projectForm, status: v })} />
-      <FormInput label="Start Date" type="date" value={projectForm.start_date} onChange={(v) => setProjectForm({ ...projectForm, start_date: v })} />
-      <FormInput label="Target Completion Date" type="date" value={projectForm.target_completion_date} onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })} />
-      <FormArea label="Notes" value={projectForm.notes} onChange={(v) => setProjectForm({ ...projectForm, notes: v })} />
+      <FormInput
+        label="Job / Project Name"
+        value={projectForm.name}
+        onChange={(v) => setProjectForm({ ...projectForm, name: v })}
+      />
 
-      <button style={buttonDark} onClick={saveProject}>
-        {editingProjectId ? "Save Changes" : "Add Project"}
-      </button>
+      <FormInput
+        label="Client Name"
+        value={projectForm.client_name}
+        onChange={(v) => setProjectForm({ ...projectForm, client_name: v })}
+      />
 
-      {editingProjectId && (
-        <button style={button} onClick={cancelProjectEdit}>
-          Cancel Edit
+      <FormInput
+        label="Site Address"
+        value={projectForm.site_address}
+        onChange={(v) => setProjectForm({ ...projectForm, site_address: v })}
+      />
+
+      <FormInput
+        label="Job Type"
+        value={projectForm.job_type || ""}
+        onChange={(v) => setProjectForm({ ...projectForm, job_type: v })}
+        placeholder="Boiler, plumbing, electrical, refurb, maintenance"
+      />
+
+      <FormInput
+        label="Estimated / Contract Value"
+        type="number"
+        value={projectForm.contract_value}
+        onChange={(v) => setProjectForm({ ...projectForm, contract_value: v })}
+      />
+
+      <FormInput
+        label="Status"
+        value={projectForm.status}
+        onChange={(v) => setProjectForm({ ...projectForm, status: v })}
+        placeholder="Enquiry, Quoted, Accepted, Live, Completed"
+      />
+
+      <FormInput
+        label="Start Date"
+        type="date"
+        value={projectForm.start_date}
+        onChange={(v) => setProjectForm({ ...projectForm, start_date: v })}
+      />
+
+      <FormInput
+        label="Target Completion Date"
+        type="date"
+        value={projectForm.target_completion_date}
+        onChange={(v) => setProjectForm({ ...projectForm, target_completion_date: v })}
+      />
+
+      <FormArea
+        label="Job Notes / Scope"
+        value={projectForm.notes}
+        onChange={(v) => setProjectForm({ ...projectForm, notes: v })}
+      />
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button style={buttonDark} onClick={saveProject}>
+          {editingProjectId ? "Save Job Changes" : "Create Job"}
         </button>
-      )}
+
+        <button
+          style={button}
+          onClick={() => {
+            setAiPrompt(
+              `Help me set up a job for ${projectForm.name || "this client"}. Job type: ${projectForm.job_type || ""}. Notes: ${projectForm.notes || ""}`
+            );
+            setActiveTab("AI Assistant");
+          }}
+        >
+          Ask AI to Help Set Up
+        </button>
+
+        {editingProjectId && (
+          <button style={button} onClick={cancelProjectEdit}>
+            Cancel Edit
+          </button>
+        )}
+      </div>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Project</th>
+          <th>Job</th>
           <th>Client</th>
           <th>Address</th>
-          <th>Contract Value</th>
+          <th>Type</th>
+          <th>Value</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -1150,20 +1215,21 @@ async function saveCashflowOverride(row, field, value) {
             <td>{p.name}</td>
             <td>{p.client_name}</td>
             <td>{p.site_address}</td>
+            <td>{p.job_type || "-"}</td>
             <td>{currency(p.contract_value)}</td>
             <td>{p.status}</td>
             <td>
               <button onClick={() => { setActiveProjectId(String(p.id)); setActiveTab("Dashboard"); }}>
-                Open
+                Open Job
               </button>
               <button onClick={() => editProject(p)}>Edit</button>
               <button onClick={() => deleteProject(p.id)}>Delete</button>
             </td>
           </tr>
         ))}
-            </tbody>
+      </tbody>
     </table>
-</Section>
+  </Section>
 )}
 </div>
 );

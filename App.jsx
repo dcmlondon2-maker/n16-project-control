@@ -260,6 +260,7 @@ const [expenseForm, setExpenseForm] = useState({
     return;
   }
 
+const saveExpense = async () => {
   const net = Number(expenseForm.net_amount || 0);
   const vat = Number(expenseForm.vat_amount || 0);
 
@@ -282,19 +283,18 @@ const [expenseForm, setExpenseForm] = useState({
     .select();
 
   if (error) {
-  console.error(error);
-  alert("Expense NOT saved: " + error.message);
-  return;
-}
+    console.error(error);
+    alert("Expense NOT saved: " + error.message);
+    return;
+  }
 
-setExpenses((prev) => [
-  ...data.filter((x) => Number(x.project_id) === Number(activeProjectId)),
-  ...prev,
-]);
+  // 🔥 THIS FORCES THE LIST TO UPDATE
+  await loadData();
 
-alert("Expense saved.");
-console.log("Saved expense:", data);
+  alert("Expense saved.");
+  console.log("Saved expense:", data);
 
+  // optional: reset form
   setExpenseForm({
     expense_date: today,
     supplier: "",
@@ -305,7 +305,7 @@ console.log("Saved expense:", data);
     vat_amount: "",
     notes: "",
   });
-
+};
   await loadData();
 alert("Expense saved.");
 }

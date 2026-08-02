@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dylan's Helping Hand offers reliable gardening, handyman and small household jobs in the local area." />
+  <title>Dylan's Helping Hand | Gardening & Small Jobs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+* { box-sizing: border-box; }
+:root { --ink:#183028; --muted:#5d6e67; --green:#2f6b4f; --green-dark:#214c39; --lime:#d9efb4; --cream:#f8f6ef; --white:#fff; --line:#dfe7e2; --shadow:0 18px 50px rgba(24,48,40,.12); }
+html { scroll-behavior:smooth; }
+body { margin:0; font-family:"Manrope",Arial,sans-serif; color:var(--ink); background:var(--white); line-height:1.65; }
+a { color:inherit; }
+.container { width:min(1120px,calc(100% - 40px)); margin:0 auto; }
+.site-header { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.94); backdrop-filter:blur(12px); border-bottom:1px solid rgba(223,231,226,.85); }
+.nav-wrap,.footer-wrap { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.nav-wrap { min-height:78px; }
+.brand { display:flex; align-items:center; gap:12px; text-decoration:none; line-height:1.2; }
+.brand-mark { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; background:var(--green); color:var(--white); font-weight:800; }
+.brand strong,.brand small { display:block; }
+.brand small { margin-top:3px; color:var(--muted); font-size:.75rem; }
+.hero { overflow:hidden; padding:96px 0 84px; background:radial-gradient(circle at 85% 15%,rgba(217,239,180,.85),transparent 30%),linear-gradient(135deg,#f8f6ef 0%,#fff 62%); }
+.hero-grid,.about-grid,.contact-grid { display:grid; grid-template-columns:1.35fr .85fr; align-items:center; gap:64px; }
+.eyebrow { margin:0 0 14px; color:var(--green); font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+h1 { max-width:760px; margin:0; font-size:clamp(2.7rem,7vw,5.3rem); line-height:1.02; letter-spacing:-.055em; }
+.hero-copy { max-width:680px; margin:26px 0 0; color:var(--muted); font-size:1.15rem; }
+.hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:32px; }
+.button { display:inline-flex; align-items:center; justify-content:center; min-height:52px; padding:0 23px; border:2px solid var(--green); border-radius:12px; background:var(--green); color:var(--white); font:inherit; font-weight:800; text-decoration:none; cursor:pointer; transition:.2s ease; }
+.button:hover { transform:translateY(-2px); background:var(--green-dark); border-color:var(--green-dark); }
+.button-outline { background:transparent; color:var(--green); }
+.button-small { min-height:42px; padding:0 17px; font-size:.9rem; }
+.trust-row { display:flex; flex-wrap:wrap; gap:18px; margin-top:30px; color:var(--green-dark); font-size:.9rem; font-weight:700; }
+.hero-card { padding:36px; border:1px solid var(--line); border-radius:28px; background:var(--white); box-shadow:var(--shadow); }
+.hero-icon { font-size:3rem; }
+.hero-card h2 { margin:17px 0 10px; font-size:1.55rem; }
+.hero-card p { color:var(--muted); }
+.hero-card a { color:var(--green); font-weight:800; text-decoration:none; }
+.section { padding:96px 0; }
+.section-soft { background:var(--cream); }
+.section-title { max-width:760px; margin:0; font-size:clamp(2rem,5vw,3.4rem); line-height:1.1; letter-spacing:-.04em; }
+.card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:44px; }
+.service-card { padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--white); }
+.service-icon { font-size:2.2rem; }
+.service-card h3 { margin:13px 0 8px; font-size:1.35rem; }
+.service-card p,.about-grid p,.contact-grid p { color:var(--muted); }
+.service-card ul { margin:20px 0 0; padding-left:20px; }
+.service-card li+li { margin-top:7px; }
+.safety-note { margin:28px 0 0; padding:15px 18px; border-left:4px solid var(--green); background:#f3f8f5; color:var(--muted); font-size:.9rem; }
+.feature-list { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+.feature { padding:22px; border:1px solid var(--line); border-radius:18px; background:var(--white); }
+.feature strong,.feature span { display:block; }
+.feature span { margin-top:5px; color:var(--muted); font-size:.9rem; }
+.contact-section { background:var(--green-dark); color:var(--white); }
+.contact-section .eyebrow { color:var(--lime); }
+.contact-section .section-title,.contact-section p { color:var(--white); }
+.contact-details { display:grid; gap:11px; margin-top:27px; }
+.contact-details a,.contact-details span { text-decoration:none; font-weight:700; }
+.contact-form { display:grid; gap:18px; padding:30px; border-radius:24px; background:var(--white); color:var(--ink); }
+.contact-form label { display:grid; gap:7px; font-size:.88rem; font-weight:800; }
+.contact-form input,.contact-form textarea { width:100%; padding:14px 15px; border:1px solid #cfdad4; border-radius:10px; background:#fbfcfb; font:inherit; }
+.contact-form textarea { resize:vertical; }
+.contact-form input:focus,.contact-form textarea:focus { outline:3px solid rgba(47,107,79,.18); border-color:var(--green); }
+.form-note { margin:0; color:var(--muted)!important; font-size:.78rem; }
+footer { padding:25px 0; background:#10261d; color:#d9e6df; font-size:.82rem; }
+.whatsapp-float { position:fixed; right:20px; bottom:20px; z-index:50; display:inline-flex; align-items:center; gap:9px; padding:14px 18px; border-radius:999px; background:#25D366; color:#081f13; font-weight:800; text-decoration:none; box-shadow:0 12px 30px rgba(0,0,0,.22); }
+.whatsapp-float:hover { transform:translateY(-2px); }
+@media (max-width:850px) { .hero-grid,.about-grid,.contact-grid { grid-template-columns:1fr; gap:38px; } .card-grid { grid-template-columns:1fr; } .hero,.section { padding:70px 0; } }
+@media (max-width:560px) { .container { width:min(100% - 28px,1120px); } .site-header .button-small,.brand small { display:none; } .feature-list { grid-template-columns:1fr; } .hero-actions,.hero-actions .button { width:100%; } .trust-row { display:grid; gap:8px; } .footer-wrap { align-items:flex-start; flex-direction:column; gap:5px; } .whatsapp-float { left:14px; right:14px; justify-content:center; } body { padding-bottom:72px; } }
+  </style>
+</head>
+<body>
+  <header class="site-header"><div class="container nav-wrap"><a class="brand" href="#top"><span class="brand-mark">DH</span><span><strong>Dylan's Helping Hand</strong><small>Reliable help. No job too small.</small></span></a><a class="button button-small" href="https://wa.me/447742511639" target="_blank" rel="noopener">WhatsApp Dylan</a></div></header>
+  <main id="top">
+    <section class="hero"><div class="container hero-grid"><div><p class="eyebrow">Gardening • Handyman • Household Jobs</p><h1>A helping hand for the jobs you need done.</h1><p class="hero-copy">Hi, I’m Dylan. I’m 20 years old, hardworking, reliable and looking to help local people with gardening, small repairs and everyday jobs around the home.</p><div class="hero-actions"><a class="button" href="https://wa.me/447742511639?text=Hi%20Dylan%2C%20I%20have%20a%20job%20I%27d%20like%20help%20with." target="_blank" rel="noopener">Message on WhatsApp</a><a class="button button-outline" href="#services">View services</a></div><div class="trust-row"><span>✓ Friendly service</span><span>✓ Fair prices</span><span>✓ Small jobs welcome</span></div></div><aside class="hero-card"><div class="hero-icon">🛠️</div><h2>Available for local work</h2><p>One-off jobs, regular garden maintenance and general practical help.</p><a href="https://wa.me/447742511639?text=Hi%20Dylan%2C%20I%27d%20like%20to%20ask%20about%20a%20small%20job." target="_blank" rel="noopener">Tell me what you need →</a></aside></div></section>
+    <section class="section" id="services"><div class="container"><p class="eyebrow">How I can help</p><h2 class="section-title">Useful help around your home and garden</h2><div class="card-grid"><article class="service-card"><span class="service-icon">🌿</span><h3>Gardening</h3><p>Keeping gardens tidy, manageable and looking their best.</p><ul><li>Grass cutting</li><li>Weeding and tidying</li><li>Hedge and shrub trimming</li><li>Leaf clearing</li><li>Planting and watering</li></ul></article><article class="service-card"><span class="service-icon">🔨</span><h3>Handyman Jobs</h3><p>Practical help with small repairs, fitting and maintenance.</p><ul><li>Putting up shelves</li><li>Flat-pack furniture</li><li>Minor repairs</li><li>Hanging pictures and mirrors</li><li>Basic painting and touch-ups</li></ul></article><article class="service-card"><span class="service-icon">🏠</span><h3>Small Household Jobs</h3><p>Extra help for jobs that are difficult, awkward or time-consuming.</p><ul><li>Moving light furniture</li><li>Garage and shed clear-outs</li><li>Pressure washing</li><li>Rubbish bagging and tidying</li><li>General odd jobs</li></ul></article></div><p class="safety-note">For safety, I do not undertake gas work, major electrical work, roofing or jobs that legally require a qualified tradesperson.</p></div></section>
+    <section class="section section-soft"><div class="container about-grid"><div><p class="eyebrow">Why choose me?</p><h2 class="section-title">Young, motivated and ready to work</h2><p>I’m building my experience and reputation by doing a good job, arriving when agreed and treating every customer’s home with respect.</p></div><div class="feature-list"><div class="feature"><strong>Reliable</strong><span>Clear communication and agreed arrival times.</span></div><div class="feature"><strong>Hardworking</strong><span>I take pride in getting jobs finished properly.</span></div><div class="feature"><strong>Affordable</strong><span>Fair prices agreed before work begins.</span></div><div class="feature"><strong>Flexible</strong><span>Weekday and weekend availability by arrangement.</span></div></div></div></section>
+    <section class="section contact-section" id="contact"><div class="container contact-grid"><div><p class="eyebrow">Get a free estimate</p><h2 class="section-title">Have a small job that needs doing?</h2><p>Send Dylan a short description, your area and a photo of the job on WhatsApp where possible. I’ll reply to arrange a visit or provide an initial estimate.</p><div class="contact-details"><a href="https://wa.me/447742511639?text=Hi%20Dylan%2C%20I%27d%20like%20a%20quote%20for%20a%20job." target="_blank" rel="noopener">💬 WhatsApp Dylan: 07742 511639</a><a href="tel:+447742511639">📞 Call Dylan: 07742 511639</a><span>📍 Local gardening, handyman and household jobs</span></div></div><form class="contact-form" id="enquiryForm"><label>Your name<input type="text" id="name" required placeholder="Your name" /></label><label>Phone or email<input type="text" id="reply" required placeholder="How should Dylan contact you?" /></label><label>What job do you need help with?<textarea id="job" rows="5" required placeholder="Describe the job and your area"></textarea></label><button class="button" type="submit">Send enquiry by WhatsApp</button><p class="form-note">This opens WhatsApp with your message ready to send. No information is stored by this website.</p></form></div></section>
+  </main>
+  <footer><div class="container footer-wrap"><span>© <span id="year"></span> Dylan’s Helping Hand</span><span>Gardening, handyman and small household jobs</span></div></footer>
+  <script>document.getElementById("year").textContent=new Date().getFullYear();document.getElementById("enquiryForm").addEventListener("submit",function(e){e.preventDefault();const name=document.getElementById("name").value.trim();const reply=document.getElementById("reply").value.trim();const job=document.getElementById("job").value.trim();const message=encodeURIComponent(`Hi Dylan, I found your Helping Hand website.\n\nName: ${name}\nMy contact details: ${reply}\n\nJob details:\n${job}`);window.open(`https://wa.me/447742511639?text=${message}`,"_blank","noopener")});</script>
+  <a class="whatsapp-float" href="https://wa.me/447742511639?text=Hi%20Dylan%2C%20I%20found%20your%20Helping%20Hand%20website%20and%20need%20help%20with%20a%20job." target="_blank" rel="noopener">💬 WhatsApp Dylan</a>
+</body>
+</html>
